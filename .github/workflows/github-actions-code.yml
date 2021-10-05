@@ -1,5 +1,5 @@
 name: Code
-on: [push]
+on: push
 jobs:
   Code-Checks:
     runs-on: ubuntu-latest
