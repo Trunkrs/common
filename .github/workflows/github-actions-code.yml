@@ -1,8 +1,5 @@
 name: Code
-on:
-  push:
-    branches:
-      - '*'
+on: [push]
 jobs:
   Code-Checks:
     runs-on: ubuntu-latest
