@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": [
+    "functions",
+    "services",
+    "providers",
+    "utils",
+    "repositories",
+    "models",
+    "config",
+    "controllers"
+  ],
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "publish",
+    "sourceMap": true
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": [
+    ".eslintrc.js",
+    ".prettierrc.js",
+    "jest.config.js",
+    "jest.setup.ts",
+    "index.d.ts",
+    "functions",
+    "services",
+    "providers",
+    "utils",
+    "repositories",
+    "models",
+    "config",
+    "controllers"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
