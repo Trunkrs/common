@@ -13,6 +13,7 @@
   "compilerOptions": {
     "noEmit": false,
     "outDir": "publish",
+    "declaration": true,
     "sourceMap": true
   }
 }
