@@ -128,15 +128,9 @@ class HttpControllerFactory {
     route: string,
     input: ActionExecutionInput,
   ): TResult {
-    console.log('Registered actions', this.#httpActionByRoute)
-    console.log('Route', `${method.toUpperCase()}:${route}`)
-
     const descriptor = HttpControllerFactory.#httpActionByRoute.get(
       `${method.toUpperCase()}:${route}`,
     )
-
-    console.log('Action', descriptor)
-    console.log('Controller name', descriptor?.controller.name)
 
     if (!descriptor) {
       throw new NoEventHandlerSetError()
