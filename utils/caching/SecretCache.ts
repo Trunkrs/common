@@ -14,6 +14,7 @@ class SecretCache extends GlobalAtomicCache {
     mountPath: string,
     protected readonly stalenessTimeout: number,
     logger: Logger,
+    private cacheDomain = 'cache'
   ) {
     super(stalenessTimeout, storeName, mountPath, logger)
   }
@@ -98,7 +99,7 @@ class SecretCache extends GlobalAtomicCache {
   }
 
   private getFullParameterName(key: string): string {
-    return `/portal-cache/${this.storeName}/${key}`
+    return `/${this.cacheDomain}/${this.storeName}/${key}`
   }
 
   protected createItem<TValue>(rawValue: TValue): CacheItem {
