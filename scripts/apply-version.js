@@ -15,3 +15,5 @@ packageJson.version = process.argv[2]
 fs.writeFileSync('publish/package.json', JSON.stringify(packageJson, null, 2))
 
 console.log('Written publish package.json')
+
+fs.copyFileSync('index.d.ts', 'publish/index.d.ts')
