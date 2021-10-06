@@ -2,7 +2,7 @@
   "name": "@trunkrs/common",
   "version": "1.0.0",
   "description": "Common standards library for development in Trunkrs",
-  "main": "index.js",
+  "types": "./index.d.ts",
   "repository": "https://github.com/Trunkrs/common.git",
   "author": "Leonard Breitkopf <leonard@trunkrs.nl>",
   "license": "MIT",
@@ -43,13 +43,14 @@
   },
   "publishDeps": {
     "peer": {
-      "date-fns": "^2.25.0",
-      "aws-sdk": "^2.952.0",
-      "joi": "^17.4.2",
-      "uuid": "^8.3.2"
+      "date-fns": ">2.0.0 || <3",
+      "aws-sdk": ">2.900.0 || <3",
+      "joi": ">17.0.0 || <18",
+      "uuid": "8",
+      "jest": ">21"
     },
     "dep": {
-      "axios": "^0.21.4",
+      "axios": "^0.22.0",
       "qs": "^6.10.1",
       "deepmerge": "^4.2.2"
     }
