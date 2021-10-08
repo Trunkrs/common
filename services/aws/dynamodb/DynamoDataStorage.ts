@@ -1,12 +1,12 @@
 import { DynamoDB } from 'aws-sdk'
 
-import { DynamoDataStorage as IDynamoDataStorage } from './interfaces'
 import { PrimaryKey, QueryBuilder, QueryParameters } from './utils'
 import BaseDynamoDataStorage from './BaseDynamoDataStorage'
+import DataStorage from './interfaces/DataStorage'
 
 abstract class DynamoDataStorage<TEntity>
   extends BaseDynamoDataStorage<TEntity>
-  implements IDynamoDataStorage<TEntity>
+  implements DataStorage<TEntity>
 {
   protected constructor(tableName: string) {
     super(tableName)
