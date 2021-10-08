@@ -18,7 +18,7 @@ abstract class DynamoIndexDataStorage<TEntity>
   public async find<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
   ): Promise<TResultEntity[]> {
-    const dynamoQuery: DynamoDB.DocumentClient.QueryInput = QueryBuilder.create(
+    const dynamoQuery: DynamoDB.DocumentClient.QueryInput = QueryBuilder.buildQuery(
       query,
       this.tableName,
       this.keys,
@@ -38,7 +38,7 @@ abstract class DynamoIndexDataStorage<TEntity>
       limit: 1,
     }
 
-    const dynamoQuery: DynamoDB.DocumentClient.QueryInput = QueryBuilder.create(
+    const dynamoQuery: DynamoDB.DocumentClient.QueryInput = QueryBuilder.buildQuery(
       limitedQuery,
       this.tableName,
       this.keys,

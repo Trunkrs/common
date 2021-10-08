@@ -96,7 +96,7 @@ class QueryBuilder {
     }
   }
 
-  public static create<TEntity>(
+  public static buildQuery<TEntity>(
     query: QueryParameters<TEntity>,
     tableName: string,
     primaryKeys: Array<keyof TEntity>,
