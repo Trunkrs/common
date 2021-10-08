@@ -1,4 +1,4 @@
-interface WriteableDataStorage <TEntity> {
+interface WriteableDataStorage<TEntity> {
   /**
    * Deletes the given entity from the database through their primary/composed key (TKey).
    * @template TEntity
@@ -13,7 +13,7 @@ interface WriteableDataStorage <TEntity> {
    * @param {TEntity} entity The entity to be saved to the database
    * @returns {TEntity} The saved entity
    */
-  save(entity: TEntity): Promise<TEntity> 
+  save(entity: TEntity): Promise<TEntity>
 }
 
 export default WriteableDataStorage

@@ -1,4 +1,4 @@
-import { QueryParameters } from '../DynamoDB/utils'
+import { QueryParameters } from '../utils'
 
 interface QueryableDataStorage<TEntity> {
   /**
@@ -21,4 +21,3 @@ interface QueryableDataStorage<TEntity> {
 }
 
 export default QueryableDataStorage
-

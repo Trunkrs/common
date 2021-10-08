@@ -1,12 +1,19 @@
-import QueryableDataStorage from '../../interfaces/QueryableDataStorage'
-import ReadableKeyValueDataStorage from '../../interfaces/ReadableKeyValueDataStorage'
+import QueryableDataStorage from './QueryableDataStorage'
 import { PrimaryKey } from '../utils'
-import WriteableDataStorage from '../../interfaces/WriteableDataStorage'
+import WriteableDataStorage from './WriteableDataStorage'
 
 interface DynamoDataStorage<TEntity>
   extends QueryableDataStorage<TEntity>,
-    ReadableKeyValueDataStorage<PrimaryKey<TEntity>, TEntity>,
     WriteableDataStorage<TEntity> {
+  /**
+   * Gets a single instance of TEntity through a primary/composed key.
+   * Can return null.
+   * @template TKey, TEntity
+   * @param {TKey} key some type of primary/composed key through which an entity can be found.
+   * @returns {TEntity | null} The entity or null
+   */
+  get(key: PrimaryKey<TEntity>): Promise<TEntity | null>
+
   /**
    * Performs multiple get requests at the same time through the primary keys provided.
    * @template TEntity
