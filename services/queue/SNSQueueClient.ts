@@ -12,7 +12,7 @@ class SNSQueueClient implements QueueClient {
 
   constructor(
     private readonly topicArn: string,
-    private readonly serializer: Serializer
+    private readonly serializer: Serializer,
   ) {}
 
   public async sendMessage<TMessage>(
@@ -21,8 +21,8 @@ class SNSQueueClient implements QueueClient {
     await this.client
       .publish({
         TopicArn: this.topicArn,
-        Message: this.serializer.serialize(request.message, "string"),
-        MessageGroupId:request.options?.messageGroupId,
+        Message: this.serializer.serialize(request.message, 'string'),
+        MessageGroupId: request.options?.messageGroupId,
         MessageDeduplicationId: request.options?.messageGroupId,
       })
       .promise()

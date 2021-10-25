@@ -6,12 +6,14 @@ import {
 import SNSExtractor from './extractors/SNSExtractor'
 import SQSExtractor from './extractors/SQSExtractor'
 import EventBridgeExtractor from './extractors/EventBridgeExtractor'
+import DynamoStreamExtractor from './extractors/DynamoStreamExtractor'
 
 import ControllerFactory from '../../controllers/ControllerFactory'
-import { Constructor } from '../../service-provider'
 
+import { Constructor } from '../../service-provider'
 import LambdaHandlerBuilder from '../LambdaHandlerBuilder'
-import { MessageExtractor } from './types'
+
+import { DynamoStreamRecord, MessageExtractor } from './types'
 
 class QueueHandlerBuilder<
   TMessage,
@@ -71,20 +73,32 @@ class QueueHandlerBuilder<
   }
 
   /**
+   * Creates a DynamoDB Streams handler builder.
+   */
+  public static createDynamoStream(): QueueHandlerBuilder<
+    AWSLambda.DynamoDBStreamEvent,
+    string[],
+    unknown
+  > {
+    return new QueueHandlerBuilder<
+      AWSLambda.DynamoDBStreamEvent,
+      string[],
+      unknown
+    >(DynamoStreamExtractor)
+  }
+
+  /**
    * Enables JSON parsing for the message.
    */
   public withJSONParsing<TParsedBody>(): QueueHandlerBuilder<
     TMessage,
-    TParsedBody,
+    TMessage extends AWSLambda.DynamoDBStreamEvent
+      ? DynamoStreamRecord<TParsedBody>
+      : TParsedBody,
     TController
   > {
     this.#parseJSON = true
-
-    return this as unknown as QueueHandlerBuilder<
-      TMessage,
-      TParsedBody,
-      TController
-    >
+    return this as any
   }
 
   /**
