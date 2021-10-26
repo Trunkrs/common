@@ -93,7 +93,7 @@ class QueueHandlerBuilder<
   public withJSONParsing<TParsedBody>(): QueueHandlerBuilder<
     TMessage,
     TMessage extends AWSLambda.DynamoDBStreamEvent
-      ? DynamoStreamRecord<TParsedBody>
+      ? DynamoStreamRecord<TParsedBody>[]
       : TParsedBody,
     TController
   > {
