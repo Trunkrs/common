@@ -11,7 +11,7 @@ class SNSQueueClient implements QueueClient {
 
   constructor(
     private readonly queueUrl: string,
-    private readonly serializer: Serializer
+    private readonly serializer: Serializer,
   ) {}
 
   public async sendMessage<TMessage>(
@@ -20,7 +20,7 @@ class SNSQueueClient implements QueueClient {
     await this.client
       .sendMessage({
         QueueUrl: this.queueUrl,
-        MessageBody: this.serializer.serialize(request.message, "string"),
+        MessageBody: this.serializer.serialize(request.message, 'string'),
         MessageGroupId: request.options?.messageGroupId,
         MessageDeduplicationId: request.options?.messageGroupId,
       })
@@ -34,10 +34,10 @@ class SNSQueueClient implements QueueClient {
       QueueUrl: this.queueUrl,
       Entries: request.messages.map((message, index) => ({
         Id: String(index),
-        MessageBody: this.serializer.serialize(message, "string"),
+        MessageBody: this.serializer.serialize(message, 'string'),
         MessageGroupId: request.options?.messageGroupId,
         MessageDeduplicationId: request.options?.messageGroupId,
-      }))
+      })),
     })
   }
 }
