@@ -1,11 +1,12 @@
 import { SecretsManager } from 'aws-sdk'
 
 import Cache from '../../utils/caching/Cache'
+import { Serializer } from '../../utils/serialization'
 
 class SecretsClient {
   private readonly secretsManager = new SecretsManager()
 
-  public constructor(private readonly cache: Cache) {}
+  public constructor(private readonly cache: Cache, private readonly serializer: Serializer) {}
 
   public async getSecretValue<TValue>(secretName: string): Promise<TValue> {
     const secretValue = await this.cache.getOrAdd<TValue>(
@@ -26,11 +27,7 @@ class SecretsClient {
     secretName: string,
     secretValue: TValue,
   ): Promise<void> {
-    const secretString =
-      typeof secretValue === 'string'
-        ? secretValue
-        : JSON.stringify(secretValue)
-
+    const secretString = this.serializer.serialize(secretValue, 'string')
     await this.secretsManager.putSecretValue({
       SecretId: secretName,
       SecretString: secretString,
