@@ -1,0 +1,35 @@
+import SecretsClient from '../../aws/SecretsClient'
+
+import OAuthClient from '../OAuthClient'
+import { AppClient } from '../../../models/oauth'
+import { JSONSerializer } from '../../../utils/serialization'
+import TokenNotFoundError from './TokenNotFoundError'
+
+class MachineTokenClient {
+  public constructor(
+    private readonly appClientSecretName: string,
+    private readonly secretsClient: SecretsClient,
+    private readonly oAuthClient: OAuthClient,
+    private readonly serializer: JSONSerializer,
+  ) {}
+
+  public async getMachineToken(): Promise<string> {
+    const serializedValue = await this.secretsClient.getSecretValue(
+      this.appClientSecretName,
+    )
+    if (!serializedValue) {
+      throw new TokenNotFoundError()
+    }
+
+    const clientDetails =
+      this.serializer.deserialize<AppClient>(serializedValue)
+
+    const { accessToken } = await this.oAuthClient.clientCredentialsFlow(
+      clientDetails,
+    )
+
+    return accessToken
+  }
+}
+
+export default MachineTokenClient

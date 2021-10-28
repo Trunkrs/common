@@ -1,36 +1,34 @@
 import { SecretsManager } from 'aws-sdk'
 
 import Cache from '../../utils/caching/Cache'
-import { Serializer } from '../../utils/serialization'
 
 class SecretsClient {
   private readonly secretsManager = new SecretsManager()
 
-  public constructor(private readonly cache: Cache, private readonly serializer: Serializer) {}
+  public constructor(private readonly cache: Cache) {}
 
-  public async getSecretValue<TValue>(secretName: string): Promise<TValue> {
-    const secretValue = await this.cache.getOrAdd<TValue>(
+  public async getSecretValue(secretName: string): Promise<string | undefined> {
+    const secretValue = await this.cache.getOrAdd<string | undefined>(
       secretName,
       async () => {
         const secret = await this.secretsManager
           .getSecretValue({ SecretId: secretName })
           .promise()
 
-        return JSON.parse(secret.SecretString as string)
+        return secret.SecretString
       },
     )
 
     return secretValue
   }
 
-  public async updateSecretValue<TValue>(
+  public async updateSecretValue(
     secretName: string,
-    secretValue: TValue,
+    secretValue: string,
   ): Promise<void> {
-    const secretString = this.serializer.serialize(secretValue, 'string')
     await this.secretsManager.putSecretValue({
       SecretId: secretName,
-      SecretString: secretString,
+      SecretString: secretValue,
     })
 
     const isCacheNotEmpty = await this.cache.hasKey(secretName)
@@ -38,7 +36,7 @@ class SecretsClient {
       await this.cache.remove(secretName)
     }
 
-    await this.cache.add<TValue>(secretName, secretValue)
+    await this.cache.add(secretName, secretValue)
   }
 }
 
