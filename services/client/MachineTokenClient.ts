@@ -5,9 +5,9 @@ import OAuthClient from './OAuthClient'
 
 class MachineTokenClient {
   public constructor(
-    private readonly appClientSecretName: string,
-    private readonly secretsClient: SecretsClient,
-    private readonly oAuthClient: OAuthClient,
+    protected readonly appClientSecretName: string,
+    protected readonly secretsClient: SecretsClient,
+    protected readonly oAuthClient: OAuthClient,
   ) {}
 
   public async getMachineToken(): Promise<string> {
