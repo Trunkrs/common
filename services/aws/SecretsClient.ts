@@ -21,6 +21,23 @@ class SecretsClient {
 
     return secretValue
   }
+
+  public async updateSecretValue<TValue>(
+    secretName: string,
+    secretValue: TValue,
+  ): Promise<void> {
+    await this.secretsManager.putSecretValue({
+      SecretId: secretName,
+      SecretString: JSON.stringify(secretValue),
+    })
+
+    const isCacheNotEmpty = await this.cache.hasKey(secretName)
+    if (isCacheNotEmpty) {
+      await this.cache.remove(secretName)
+    }
+
+    await this.cache.add<TValue>(secretName, secretValue)
+  }
 }
 
 export default SecretsClient
