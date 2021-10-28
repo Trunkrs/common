@@ -26,9 +26,14 @@ class SecretsClient {
     secretName: string,
     secretValue: TValue,
   ): Promise<void> {
+    const secretString =
+      typeof secretValue === 'string'
+        ? secretValue
+        : JSON.stringify(secretValue)
+
     await this.secretsManager.putSecretValue({
       SecretId: secretName,
-      SecretString: JSON.stringify(secretValue),
+      SecretString: secretString,
     })
 
     const isCacheNotEmpty = await this.cache.hasKey(secretName)
