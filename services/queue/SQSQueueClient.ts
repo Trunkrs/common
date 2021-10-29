@@ -2,7 +2,7 @@ import { SQS } from 'aws-sdk'
 import QueueClient from './QueueClient'
 import {
   QueueBatchMessageRequest,
-  QueueMessageRequest,
+  QueueMessageRequest, SQSMessageOptions,
 } from './QueueClient/models'
 import Serializer from '../../utils/serialization/Serializer'
 
@@ -15,7 +15,7 @@ class SNSQueueClient implements QueueClient {
   ) {}
 
   public async sendMessage<TMessage>(
-    request: QueueMessageRequest<TMessage>,
+    request: QueueMessageRequest<TMessage, SQSMessageOptions>,
   ): Promise<void> {
     await this.client
       .sendMessage({
@@ -28,7 +28,7 @@ class SNSQueueClient implements QueueClient {
   }
 
   public async sendBatchMessage<TMessage>(
-    request: QueueBatchMessageRequest<TMessage>,
+    request: QueueBatchMessageRequest<TMessage, SQSMessageOptions>,
   ): Promise<void> {
     await this.client.sendMessageBatch({
       QueueUrl: this.queueUrl,
