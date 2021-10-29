@@ -1,4 +1,5 @@
 import { SNS } from 'aws-sdk'
+
 import Serializer from '../../utils/serialization/Serializer'
 
 import QueueClient from './QueueClient'
@@ -25,7 +26,13 @@ class SNSQueueClient implements QueueClient {
   private readonly client = new SNS()
 
   constructor(
+    /**
+     * The ARN of the SNS topic to publish the messages to.
+     */
     private readonly topicArn: string,
+    /**
+     * The serializer to use when serializing messages.
+     */
     private readonly serializer: Serializer,
   ) {}
 

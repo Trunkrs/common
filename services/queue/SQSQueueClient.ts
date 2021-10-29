@@ -1,16 +1,25 @@
 import { SQS } from 'aws-sdk'
+
+import Serializer from '../../utils/serialization/Serializer'
+
 import QueueClient from './QueueClient'
 import {
   QueueBatchMessageRequest,
-  QueueMessageRequest, SQSMessageOptions,
+  QueueMessageRequest,
+  SQSMessageOptions,
 } from './QueueClient/models'
-import Serializer from '../../utils/serialization/Serializer'
 
 class SNSQueueClient implements QueueClient {
   private readonly client = new SQS()
 
   constructor(
+    /**
+     * The SQS queue url to use to publish messages to.
+     */
     private readonly queueUrl: string,
+    /**
+     * The serializer to use when publishing messages.
+     */
     private readonly serializer: Serializer,
   ) {}
 

@@ -14,10 +14,17 @@ export interface EventBridgeMessageOptions {
   resources?: string[]
 }
 
+export interface KinesisMessageOptions {
+  partitionKey?: string
+  hashKey?: string
+  sequenceNumber?: string
+}
+
 type MessageOptions =
   | SQSMessageOptions
   | SNSMessageOptions
   | EventBridgeMessageOptions
+  | KinesisMessageOptions
 
 export interface QueueMessageRequest<
   TMessage,
