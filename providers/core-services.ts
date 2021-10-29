@@ -10,6 +10,7 @@ import SecretsClient from '../services/aws/SecretsClient'
 
 import awsProvider from './aws'
 import utilsProvider, { HttpClient } from './utils'
+import {JSONSerializer} from '../utils/serialization'
 
 const configureCoreServices = (
   baseUrl: string,
@@ -31,6 +32,7 @@ const configureCoreServices = (
         clientSecretName,
         awsProvider.provide(SecretsClient),
         coreServicesProvider.provide(CognitoOAuthClient),
+        utilsProvider.provide(JSONSerializer),
       ),
   )
 

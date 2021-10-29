@@ -7,19 +7,36 @@ class SecretsClient {
 
   public constructor(private readonly cache: Cache) {}
 
-  public async getSecretValue<TValue>(secretName: string): Promise<TValue> {
-    const secretValue = await this.cache.getOrAdd<TValue>(
+  public async getSecretValue(secretName: string): Promise<string | undefined> {
+    const secretValue = await this.cache.getOrAdd<string | undefined>(
       secretName,
       async () => {
         const secret = await this.secretsManager
           .getSecretValue({ SecretId: secretName })
           .promise()
 
-        return JSON.parse(secret.SecretString as string)
+        return secret.SecretString
       },
     )
 
     return secretValue
+  }
+
+  public async updateSecretValue(
+    secretName: string,
+    secretValue: string,
+  ): Promise<void> {
+    await this.secretsManager.putSecretValue({
+      SecretId: secretName,
+      SecretString: secretValue,
+    })
+
+    const isCacheNotEmpty = await this.cache.hasKey(secretName)
+    if (isCacheNotEmpty) {
+      await this.cache.remove(secretName)
+    }
+
+    await this.cache.add(secretName, secretValue)
   }
 }
 

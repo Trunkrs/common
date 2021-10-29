@@ -1,8 +1,8 @@
 import Cache from '../../utils/caching/Cache'
 
-import MachineTokenClient from './MachineTokenClient'
 import { HttpClient, HttpRequestParams } from './HttpClient'
 import AxiosClient from './AxiosClient'
+import MachineTokenClient from './MachineTokenClient'
 
 type ResponseType = HttpRequestParams['responseType']
 
