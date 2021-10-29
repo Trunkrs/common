@@ -14,17 +14,17 @@ class EventBridgeClient implements QueueClient {
 
   public constructor(
     /**
-     * The bus name to which event are to be sent.
-     */
-    private readonly busName: string,
-    /**
-     * The name of the sender source that will emit the messages.
-     */
-    private readonly sourceName: string,
-    /**
      * The serializer to use for serialization of message payloads.
      */
     private readonly serializer: Serializer,
+    /**
+     * The name of the sender source that will emit the messages.
+     */
+    private readonly sourceName?: string,
+    /**
+     * The bus name to which event are to be sent.
+     */
+    private readonly busName?: string,
     /**
      * Optional detail type for messages to be sent by this client.
      * This value can also be defined on a per emission basis in the message options.

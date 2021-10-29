@@ -18,7 +18,7 @@ class SNSQueueClient implements QueueClient {
       case 'boolean':
         return 'Boolean'
       default:
-        return 'string'
+        return 'String'
     }
   }
 
