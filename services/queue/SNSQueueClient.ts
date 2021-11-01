@@ -1,29 +1,67 @@
 import { SNS } from 'aws-sdk'
+
 import Serializer from '../../utils/serialization/Serializer'
 
 import QueueClient from './QueueClient'
 import {
   QueueBatchMessageRequest,
   QueueMessageRequest,
+  SNSMessageOptions,
 } from './QueueClient/models'
 
 class SNSQueueClient implements QueueClient {
+  private static translateJStypeToSNSType(typeName: string): string {
+    switch (typeName) {
+      case 'string':
+        return 'String'
+      case 'number':
+        return 'Number'
+      case 'boolean':
+        return 'Boolean'
+      default:
+        return 'String'
+    }
+  }
+
   private readonly client = new SNS()
 
   constructor(
+    /**
+     * The ARN of the SNS topic to publish the messages to.
+     */
     private readonly topicArn: string,
+    /**
+     * The serializer to use when serializing messages.
+     */
     private readonly serializer: Serializer,
   ) {}
 
   public async sendMessage<TMessage>(
-    request: QueueMessageRequest<TMessage>,
+    request: QueueMessageRequest<TMessage, SNSMessageOptions>,
   ): Promise<void> {
+    // Turn optional message attributes into SNS equivalents
+    const attributes = request.options?.attributes
+      ? Object.keys(request.options?.attributes).reduce(
+          (keyMap, attrKey) =>
+            Object.assign(keyMap, {
+              [attrKey]: {
+                DataType: SNSQueueClient.translateJStypeToSNSType(
+                  typeof request.options?.attributes?.[attrKey],
+                ),
+                StringValue: String(request.options?.attributes?.[attrKey]),
+              },
+            }),
+          {} as { [key: string]: SNS.Types.MessageAttributeValue },
+        )
+      : {}
+
     await this.client
       .publish({
         TopicArn: this.topicArn,
         Message: this.serializer.serialize(request.message, 'string'),
         MessageGroupId: request.options?.messageGroupId,
         MessageDeduplicationId: request.options?.messageGroupId,
+        MessageAttributes: attributes,
       })
       .promise()
   }
