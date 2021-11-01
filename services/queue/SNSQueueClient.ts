@@ -2,12 +2,12 @@ import { SNS } from 'aws-sdk'
 
 import Serializer from '../../utils/serialization/Serializer'
 
-import QueueClient from './QueueClient'
 import {
+  QueueClient,
   QueueBatchMessageRequest,
   QueueMessageRequest,
   SNSMessageOptions,
-} from './QueueClient/models'
+} from './QueueClient'
 
 class SNSQueueClient implements QueueClient {
   private static translateJStypeToSNSType(typeName: string): string {

@@ -2,12 +2,12 @@ import { Kinesis } from 'aws-sdk'
 
 import { Serializer } from '../../utils/serialization'
 
-import QueueClient from './QueueClient'
 import {
+  QueueClient,
   KinesisMessageOptions,
   QueueBatchMessageRequest,
   QueueMessageRequest,
-} from './QueueClient/models'
+} from './QueueClient'
 
 class KinesisClient implements QueueClient {
   private readonly client = new Kinesis()

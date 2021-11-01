@@ -1,9 +1,13 @@
 import SecretsClient from '../../aws/SecretsClient'
 
-import OAuthClient from '../OAuthClient'
 import { AppClient } from '../../../models/oauth'
 import { JSONSerializer } from '../../../utils/serialization'
+
+import OAuthClient from '../OAuthClient'
+
 import TokenNotFoundError from './TokenNotFoundError'
+
+export { default as TokenNotFoundError } from './TokenNotFoundError'
 
 class MachineTokenClient {
   public constructor(

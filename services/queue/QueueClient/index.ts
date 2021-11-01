@@ -1,5 +1,7 @@
 import { QueueBatchMessageRequest, QueueMessageRequest } from './models'
 
+export * from './models'
+
 export interface QueueClient {
   /** Send a message through a queue
    * @param { QueueMessageRequest } request The message request
@@ -16,5 +18,3 @@ export interface QueueClient {
     request: QueueBatchMessageRequest<TMessage, TOptions>,
   ): Promise<void>
 }
-
-export default QueueClient

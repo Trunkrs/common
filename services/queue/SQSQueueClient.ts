@@ -2,12 +2,12 @@ import { SQS } from 'aws-sdk'
 
 import Serializer from '../../utils/serialization/Serializer'
 
-import QueueClient from './QueueClient'
 import {
+  QueueClient,
   QueueBatchMessageRequest,
   QueueMessageRequest,
   SQSMessageOptions,
-} from './QueueClient/models'
+} from './QueueClient'
 
 class SNSQueueClient implements QueueClient {
   private readonly client = new SQS()

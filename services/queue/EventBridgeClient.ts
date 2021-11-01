@@ -2,12 +2,12 @@ import { EventBridge } from 'aws-sdk'
 
 import { Serializer } from '../../utils/serialization'
 
-import QueueClient from './QueueClient'
 import {
+  QueueClient,
   EventBridgeMessageOptions,
   QueueBatchMessageRequest,
   QueueMessageRequest,
-} from './QueueClient/models'
+} from './QueueClient'
 
 class EventBridgeClient implements QueueClient {
   private readonly client = new EventBridge()
