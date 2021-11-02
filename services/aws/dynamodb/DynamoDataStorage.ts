@@ -75,11 +75,8 @@ abstract class DynamoDataStorage<TEntity>
   public async find<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
   ): Promise<TResultEntity[]> {
-    const dynamoQuery: DynamoDB.DocumentClient.QueryInput = QueryBuilder.buildQuery(
-      query,
-      this.tableName,
-      this.keys,
-    )
+    const dynamoQuery: DynamoDB.DocumentClient.QueryInput =
+      QueryBuilder.buildQuery(query, this.tableName, this.keys)
 
     const results = await this.documentClient.query(dynamoQuery).promise()
 
@@ -94,11 +91,8 @@ abstract class DynamoDataStorage<TEntity>
       limit: 1,
     }
 
-    const dynamoQuery: DynamoDB.DocumentClient.QueryInput = QueryBuilder.buildQuery(
-      limitedQuery,
-      this.tableName,
-      this.keys,
-    )
+    const dynamoQuery: DynamoDB.DocumentClient.QueryInput =
+      QueryBuilder.buildQuery(limitedQuery, this.tableName, this.keys)
 
     const results = await this.documentClient.query(dynamoQuery).promise()
 
