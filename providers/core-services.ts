@@ -10,11 +10,17 @@ import SecretsClient from '../services/aws/SecretsClient'
 
 import awsProvider from './aws'
 import utilsProvider, { HttpClient } from './utils'
-import {JSONSerializer} from '../utils/serialization'
+import { JSONSerializer } from '../utils/serialization'
+
+
+export const coreServicesMachineTokenClient =
+  ServiceProvider.createSymbol<MachineTokenClient>(
+    'CoreServicesMachineTokenClient',
+  )
 
 const configureCoreServices = (
   baseUrl: string,
-  clientSecretName: string
+  clientSecretName: string,
 ): ServiceProvider => {
   const coreServicesProvider = new ServiceProvider()
 
@@ -25,7 +31,7 @@ const configureCoreServices = (
   )
 
   coreServicesProvider.register(
-    MachineTokenClient,
+    coreServicesMachineTokenClient,
     Lifecycle.Singleton,
     () =>
       new MachineTokenClient(
@@ -41,7 +47,7 @@ const configureCoreServices = (
     Lifecycle.Singleton,
     () =>
       new MachineClient(
-        coreServicesProvider.provide(MachineTokenClient),
+        coreServicesProvider.provide(coreServicesMachineTokenClient),
         utilsProvider.provide(HttpClient),
         utilsProvider.provide(MemoryCache),
         'core-services-token',

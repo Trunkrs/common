@@ -11,8 +11,10 @@ import { HttpClient as GenericHttpClient } from '../services/client/HttpClient'
 import AxiosClient from '../services/client/AxiosClient'
 
 export const Logger = ServiceProvider.createSymbol<GenericLogger>('Logger')
-export const Serializer = ServiceProvider.createSymbol<GenericSerializer>('Serializer')
-export const HttpClient = ServiceProvider.createSymbol<GenericHttpClient>('HttpClient')
+export const Serializer =
+  ServiceProvider.createSymbol<GenericSerializer>('Serializer')
+export const HttpClient =
+  ServiceProvider.createSymbol<GenericHttpClient>('HttpClient')
 
 const utilsProvider = new ServiceProvider()
 
