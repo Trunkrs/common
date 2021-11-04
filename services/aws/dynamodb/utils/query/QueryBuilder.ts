@@ -1,6 +1,6 @@
 import { DynamoDB } from 'aws-sdk'
 
-import DynamoOperator from '../../operators/DynamoOperator'
+import DynamoOperator from '../operators/DynamoOperator'
 
 import WhereParameters from './QueryWhereStatement'
 import QueryParameters from './QueryParameters'

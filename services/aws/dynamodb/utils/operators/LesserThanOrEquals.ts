@@ -1,6 +1,6 @@
 import DynamoOperator from './DynamoOperator'
 
-class GreaterThanOrEquals extends DynamoOperator<number | string> {
+class LesserThanOrEquals extends DynamoOperator<number | string> {
   public constructor(valueToMaintainOrMatch: number | string) {
     super([valueToMaintainOrMatch])
   }
@@ -11,9 +11,9 @@ class GreaterThanOrEquals extends DynamoOperator<number | string> {
 
   public static fromValue(
     valueToMaintainOrMatch: number | string,
-  ): GreaterThanOrEquals {
-    return new GreaterThanOrEquals(valueToMaintainOrMatch)
+  ): LesserThanOrEquals {
+    return new LesserThanOrEquals(valueToMaintainOrMatch)
   }
 }
 
-export default GreaterThanOrEquals
+export default LesserThanOrEquals
