@@ -1,5 +1,4 @@
-import ServiceProvider from '../utils/service-provider'
-import { Lifecycle } from '../utils/service-provider/typings'
+import ServiceProvider, { Lifecycle } from '../utils/service-provider'
 
 import SecretsClient from '../services/aws/SecretsClient'
 import { MemoryCache } from '../utils/caching'
