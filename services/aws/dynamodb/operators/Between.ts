@@ -1,6 +1,6 @@
 import DynamoOperator from './DynamoOperator'
 
-class GreaterThanOrEquals extends DynamoOperator<number> {
+class Between extends DynamoOperator<number> {
   public constructor(valueStart: number, valueEnd: number) {
     super([valueStart, valueEnd])
   }
@@ -12,9 +12,9 @@ class GreaterThanOrEquals extends DynamoOperator<number> {
   public static fromValue(
     valueStart: number,
     valueEnd: number,
-  ): GreaterThanOrEquals {
-    return new GreaterThanOrEquals(valueStart, valueEnd)
+  ): Between {
+    return new Between(valueStart, valueEnd)
   }
 }
 
-export default GreaterThanOrEquals
+export default Between
