@@ -6,7 +6,7 @@ class GreaterThan extends DynamoOperator<number | string> {
   }
 
   render(attributeName: string): string {
-    return `#${attributeName} > :${attributeName}0`
+    return `#${attributeName} > ${this.makeAttrValueName(attributeName, 0)}`
   }
 
   public static fromValue(numberToExceed: number | string): GreaterThan {

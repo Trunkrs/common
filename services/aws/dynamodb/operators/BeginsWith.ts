@@ -6,7 +6,10 @@ class BeginsWith extends DynamoOperator<string> {
   }
 
   public render(attributeName: string): string {
-    return `begins_with(#${attributeName}, :${attributeName}0)`
+    return `begins_with(#${attributeName}, ${this.makeAttrValueName(
+      attributeName,
+      0,
+    )})`
   }
 
   public static fromValue(startValue: string): BeginsWith {

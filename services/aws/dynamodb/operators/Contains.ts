@@ -6,7 +6,10 @@ class Contains extends DynamoOperator<string> {
   }
 
   public render(attributeName: string): string {
-    return `contains(#${attributeName}, :${attributeName}0)`
+    return `contains(#${attributeName}, ${this.makeAttrValueName(
+      attributeName,
+      0,
+    )})`
   }
 
   public static fromValue(partialValue: string): Contains {

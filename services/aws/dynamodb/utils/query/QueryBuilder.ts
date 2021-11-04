@@ -29,7 +29,9 @@ class QueryBuilder {
         const operator = where[key as keyof TEntity] as DynamoOperator
         const attributes = operator.attributeValues.reduce(
           (attrDict, value, index) =>
-            Object.assign(attrDict, { [`:${key}${index}`]: value }),
+            Object.assign(attrDict, {
+              [operator.makeAttrValueName(key, index)]: value,
+            }),
           {},
         )
 

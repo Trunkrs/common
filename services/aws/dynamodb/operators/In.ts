@@ -2,8 +2,8 @@ import DynamoOperator from './DynamoOperator'
 
 class In extends DynamoOperator<number | string> {
   render(attributeName: string): string {
-    const attributeValueMappings = this.attributeValues.map(
-      (_, index) => `:${attributeName}${index}`,
+    const attributeValueMappings = this.attributeValues.map((_, index) =>
+      this.makeAttrValueName(attributeName, index),
     )
 
     return `#${attributeName} IN (${attributeValueMappings.join(', ')})`

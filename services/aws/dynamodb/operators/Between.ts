@@ -6,13 +6,13 @@ class Between extends DynamoOperator<number> {
   }
 
   render(attributeName: string): string {
-    return `#${attributeName} BETWEEN :${attributeName}0 AND :${attributeName}1`
+    return `#${attributeName} BETWEEN ${this.makeAttrValueName(
+      attributeName,
+      0,
+    )} AND ${this.makeAttrValueName(attributeName, 1)}`
   }
 
-  public static fromValue(
-    valueStart: number,
-    valueEnd: number,
-  ): Between {
+  public static fromValue(valueStart: number, valueEnd: number): Between {
     return new Between(valueStart, valueEnd)
   }
 }
