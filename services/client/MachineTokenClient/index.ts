@@ -11,10 +11,10 @@ export { default as TokenNotFoundError } from './TokenNotFoundError'
 
 class MachineTokenClient {
   public constructor(
-    private readonly appClientSecretName: string,
-    private readonly secretsClient: SecretsClient,
-    private readonly oAuthClient: OAuthClient,
-    private readonly serializer: JSONSerializer,
+    protected readonly appClientSecretName: string,
+    protected readonly secretsClient: SecretsClient,
+    protected readonly oAuthClient: OAuthClient,
+    protected readonly serializer: JSONSerializer,
   ) {}
 
   public async getMachineToken(): Promise<string> {
