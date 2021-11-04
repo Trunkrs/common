@@ -12,11 +12,13 @@ import awsProvider from './aws'
 import utilsProvider, { HttpClient } from './utils'
 import { JSONSerializer } from '../utils/serialization'
 
-
 export const coreServicesMachineTokenClient =
   ServiceProvider.createSymbol<MachineTokenClient>(
     'CoreServicesMachineTokenClient',
   )
+
+export const coreServicesMachineClient =
+  ServiceProvider.createSymbol<MachineClient>('CoreServicesMachineClient')
 
 const configureCoreServices = (
   baseUrl: string,
@@ -43,7 +45,7 @@ const configureCoreServices = (
   )
 
   coreServicesProvider.register(
-    MachineClient,
+    coreServicesMachineClient,
     Lifecycle.Singleton,
     () =>
       new MachineClient(
