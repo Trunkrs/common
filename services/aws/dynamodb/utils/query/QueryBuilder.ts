@@ -25,7 +25,7 @@ class QueryBuilder {
     where: WhereParameters<TEntity>,
   ): NodeJS.Dict<string | number> {
     return Object.keys(where).reduce((values, key: string) => {
-      if (where[key as keyof TEntity] instanceof DynamoOperator) {
+      if ((where[key as keyof TEntity] as any) instanceof DynamoOperator) {
         const operator = where[key as keyof TEntity] as DynamoOperator
         const attributes = operator.attributeValues.reduce(
           (attrDict, value, index) =>
@@ -61,7 +61,9 @@ class QueryBuilder {
     whereStatement: WhereParameters<TEntity>,
   ): string[] {
     return Object.keys(whereStatement).map((key) => {
-      if (whereStatement[key as keyof TEntity] instanceof DynamoOperator) {
+      if (
+        (whereStatement[key as keyof TEntity] as any) instanceof DynamoOperator
+      ) {
         const operator = whereStatement[key as keyof TEntity] as DynamoOperator
         return operator.render(key)
       }
