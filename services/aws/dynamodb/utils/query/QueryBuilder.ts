@@ -1,6 +1,7 @@
 import { DynamoDB } from 'aws-sdk'
 
-import BeginsWith from './operators/BeginsWith'
+import DynamoOperator from '../../operators/DynamoOperator'
+
 import WhereParameters from './QueryWhereStatement'
 import QueryParameters from './QueryParameters'
 
@@ -24,12 +25,15 @@ class QueryBuilder {
     where: WhereParameters<TEntity>,
   ): NodeJS.Dict<string | number> {
     return Object.keys(where).reduce((values, key: string) => {
-      if (where[key as keyof TEntity] instanceof BeginsWith) {
-        return {
-          ...values,
-          [`:${key}`]: (where[key as keyof TEntity] as BeginsWith)
-            .attributeValue,
-        }
+      if (where[key as keyof TEntity] instanceof DynamoOperator) {
+        const operator = where[key as keyof TEntity] as DynamoOperator
+        const attributes = operator.attributeValues.reduce(
+          (attrDict, value, index) =>
+            Object.assign(attrDict, { [`:${key}${index}`]: value }),
+          {},
+        )
+
+        return { ...values, ...attributes }
       }
 
       return {
@@ -55,8 +59,9 @@ class QueryBuilder {
     whereStatement: WhereParameters<TEntity>,
   ): string[] {
     return Object.keys(whereStatement).map((key) => {
-      if (whereStatement[key as keyof TEntity] instanceof BeginsWith) {
-        return (whereStatement[key as keyof TEntity] as BeginsWith).render(key)
+      if (whereStatement[key as keyof TEntity] instanceof DynamoOperator) {
+        const operator = whereStatement[key as keyof TEntity] as DynamoOperator
+        return operator.render(key)
       }
 
       return `#${key} = :${key}`
