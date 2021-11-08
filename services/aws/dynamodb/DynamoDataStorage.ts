@@ -12,6 +12,27 @@ abstract class DynamoDataStorage<TEntity>
     super(tableName)
   }
 
+  protected async batchWriteRequest(
+    writeRequests: DynamoDB.DocumentClient.WriteRequests,
+  ): Promise<void> {
+    const batches = []
+    while (writeRequests.length) {
+      batches.push(writeRequests.splice(0, 24))
+    }
+
+    await Promise.all(
+      batches.map((batch) =>
+        this.documentClient
+          .batchWrite({
+            RequestItems: {
+              [this.tableName]: batch,
+            },
+          })
+          .promise(),
+      ),
+    )
+  }
+
   /**
    * Get an item using a combination of a hash key and range key, or just a hash key.
    * @template TEntity
@@ -78,9 +99,25 @@ abstract class DynamoDataStorage<TEntity>
     const dynamoQuery: DynamoDB.DocumentClient.QueryInput =
       QueryBuilder.buildQuery(query, this.tableName, this.keys)
 
-    const results = await this.documentClient.query(dynamoQuery).promise()
+    const results = []
+    let lastEvaluatedKey
+    do {
+      // eslint-disable-next-line no-await-in-loop
+      const page = await this.documentClient
+        .query({
+          ...dynamoQuery,
+          ExclusiveStartKey: lastEvaluatedKey,
+        })
+        .promise()
 
-    return results.Items ? (results.Items as TResultEntity[]) : []
+      if (page.Items && page.Items.length) {
+        results.push(...page.Items)
+      }
+
+      lastEvaluatedKey = page.LastEvaluatedKey
+    } while (lastEvaluatedKey)
+
+    return results as TResultEntity[]
   }
 
   public async findOne(
@@ -121,13 +158,7 @@ abstract class DynamoDataStorage<TEntity>
       }),
     )
 
-    await this.documentClient
-      .batchWrite({
-        RequestItems: {
-          [this.tableName]: items,
-        },
-      })
-      .promise()
+    await this.batchWriteRequest(items)
   }
 
   public async batchSave(entities: TEntity[]): Promise<TEntity[]> {
@@ -139,13 +170,7 @@ abstract class DynamoDataStorage<TEntity>
       }),
     )
 
-    await this.documentClient
-      .batchWrite({
-        RequestItems: {
-          [this.tableName]: items,
-        },
-      })
-      .promise()
+    await this.batchWriteRequest(items)
 
     return entities
   }
