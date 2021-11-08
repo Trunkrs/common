@@ -102,13 +102,14 @@ abstract class DynamoDataStorage<TEntity>
     const results = []
     let lastEvaluatedKey
     do {
-      // eslint-disable-next-line no-await-in-loop
-      const page = await this.documentClient
-        .query({
-          ...dynamoQuery,
-          ExclusiveStartKey: lastEvaluatedKey,
-        })
-        .promise()
+      const page: DynamoDB.DocumentClient.QueryOutput =
+        // eslint-disable-next-line no-await-in-loop
+        await this.documentClient
+          .query({
+            ...dynamoQuery,
+            ExclusiveStartKey: lastEvaluatedKey,
+          })
+          .promise()
 
       if (page.Items && page.Items.length) {
         results.push(...page.Items)
