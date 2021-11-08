@@ -9,8 +9,7 @@ import {
 import SecretsClient from '../services/aws/SecretsClient'
 
 import awsProvider from './aws'
-import utilsProvider, { HttpClient } from './utils'
-import { JSONSerializer } from '../utils/serialization'
+import utilsProvider, { Serializer, HttpClient } from './utils'
 
 export const coreServicesMachineTokenClient =
   ServiceProvider.createSymbol<MachineTokenClient>(
@@ -40,7 +39,7 @@ const configureCoreServices = (
         clientSecretName,
         awsProvider.provide(SecretsClient),
         coreServicesProvider.provide(CognitoOAuthClient),
-        utilsProvider.provide(JSONSerializer),
+        utilsProvider.provide(Serializer),
       ),
   )
 
