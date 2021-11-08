@@ -3,6 +3,7 @@ import { DynamoDB } from 'aws-sdk'
 import { PrimaryKey, QueryBuilder, QueryParameters } from './utils'
 import BaseDynamoDataStorage from './BaseDynamoDataStorage'
 import DataStorage from './interfaces/DataStorage'
+import BatchSizeTooBigError from './BatchSizeTooBigError'
 
 abstract class DynamoDataStorage<TEntity>
   extends BaseDynamoDataStorage<TEntity>
@@ -14,10 +15,15 @@ abstract class DynamoDataStorage<TEntity>
 
   protected async batchWriteRequest(
     writeRequests: DynamoDB.DocumentClient.WriteRequests,
+    batchSize = 24,
   ): Promise<void> {
+    if (batchSize > 24) {
+      throw new BatchSizeTooBigError()
+    }
+
     const batches = []
     while (writeRequests.length) {
-      batches.push(writeRequests.splice(0, 24))
+      batches.push(writeRequests.splice(0, batchSize))
     }
 
     await Promise.all(
@@ -148,7 +154,10 @@ abstract class DynamoDataStorage<TEntity>
       .promise()
   }
 
-  public async batchRemove(entities: Partial<TEntity>[]): Promise<void> {
+  public async batchRemove(
+    entities: Partial<TEntity>[],
+    batchSize = 24,
+  ): Promise<void> {
     const keyPairs = (entities as TEntity[]).map(this.getKeyPairFromModel)
 
     const items: DynamoDB.DocumentClient.WriteRequests = keyPairs.map(
@@ -159,10 +168,13 @@ abstract class DynamoDataStorage<TEntity>
       }),
     )
 
-    await this.batchWriteRequest(items)
+    await this.batchWriteRequest(items, batchSize)
   }
 
-  public async batchSave(entities: TEntity[]): Promise<TEntity[]> {
+  public async batchSave(
+    entities: TEntity[],
+    batchSize = 24,
+  ): Promise<TEntity[]> {
     const items: DynamoDB.DocumentClient.WriteRequests = entities.map(
       (entity) => ({
         PutRequest: {
@@ -171,7 +183,7 @@ abstract class DynamoDataStorage<TEntity>
       }),
     )
 
-    await this.batchWriteRequest(items)
+    await this.batchWriteRequest(items, batchSize)
 
     return entities
   }
