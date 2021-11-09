@@ -1,5 +1,6 @@
 import { DynamoDB } from 'aws-sdk'
 
+import { BatchWriteItemRequestMap } from 'aws-sdk/clients/dynamodb'
 import { PrimaryKey, QueryBuilder, QueryParameters } from './utils'
 import BaseDynamoDataStorage from './BaseDynamoDataStorage'
 import DataStorage from './interfaces/DataStorage'
@@ -27,15 +28,23 @@ abstract class DynamoDataStorage<TEntity>
     }
 
     await Promise.all(
-      batches.map((batch) =>
-        this.documentClient
-          .batchWrite({
-            RequestItems: {
-              [this.tableName]: batch,
-            },
-          })
-          .promise(),
-      ),
+      batches.map(async (batch: DynamoDB.DocumentClient.WriteRequest[]) => {
+        let requestItems: BatchWriteItemRequestMap | undefined = {
+          [this.tableName]: batch,
+        }
+
+        do {
+          const result: DynamoDB.DocumentClient.BatchWriteItemOutput =
+            // eslint-disable-next-line no-await-in-loop
+            await this.documentClient
+              .batchWrite({
+                RequestItems: requestItems,
+              })
+              .promise()
+
+          requestItems = result.UnprocessedItems
+        } while (requestItems)
+      }),
     )
   }
 
@@ -117,7 +126,7 @@ abstract class DynamoDataStorage<TEntity>
           })
           .promise()
 
-      if (page.Items && page.Items.length) {
+      if (page.Items?.length) {
         results.push(...page.Items)
       }
 
