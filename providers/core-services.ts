@@ -3,7 +3,7 @@ import { MemoryCache } from '../utils/caching'
 
 import {
   CognitoOAuthClient,
-  MachineClient,
+  CoreServicesMachineClient,
   MachineTokenClient,
 } from '../services/client'
 import SecretsClient from '../services/aws/SecretsClient'
@@ -17,7 +17,9 @@ export const coreServicesMachineTokenClient =
   )
 
 export const coreServicesMachineClient =
-  ServiceProvider.createSymbol<MachineClient>('CoreServicesMachineClient')
+  ServiceProvider.createSymbol<CoreServicesMachineClient>(
+    'CoreServicesMachineClient',
+  )
 
 const configureCoreServices = (
   baseUrl: string,
@@ -47,7 +49,7 @@ const configureCoreServices = (
     coreServicesMachineClient,
     Lifecycle.Singleton,
     () =>
-      new MachineClient(
+      new CoreServicesMachineClient(
         coreServicesProvider.provide(coreServicesMachineTokenClient),
         utilsProvider.provide(HttpClient),
         utilsProvider.provide(MemoryCache),
