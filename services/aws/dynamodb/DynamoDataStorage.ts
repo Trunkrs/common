@@ -1,8 +1,10 @@
 import { DynamoDB } from 'aws-sdk'
 
+import { BatchWriteItemRequestMap } from 'aws-sdk/clients/dynamodb'
 import { PrimaryKey, QueryBuilder, QueryParameters } from './utils'
 import BaseDynamoDataStorage from './BaseDynamoDataStorage'
 import DataStorage from './interfaces/DataStorage'
+import BatchSizeTooBigError from './BatchSizeTooBigError'
 
 abstract class DynamoDataStorage<TEntity>
   extends BaseDynamoDataStorage<TEntity>
@@ -10,6 +12,40 @@ abstract class DynamoDataStorage<TEntity>
 {
   protected constructor(tableName: string) {
     super(tableName)
+  }
+
+  protected async batchWriteRequest(
+    writeRequests: DynamoDB.DocumentClient.WriteRequests,
+    batchSize = 24,
+  ): Promise<void> {
+    if (batchSize > 24) {
+      throw new BatchSizeTooBigError()
+    }
+
+    const batches = []
+    while (writeRequests.length) {
+      batches.push(writeRequests.splice(0, batchSize))
+    }
+
+    await Promise.all(
+      batches.map(async (batch: DynamoDB.DocumentClient.WriteRequest[]) => {
+        let requestItems: BatchWriteItemRequestMap | undefined = {
+          [this.tableName]: batch,
+        }
+
+        do {
+          const result: DynamoDB.DocumentClient.BatchWriteItemOutput =
+            // eslint-disable-next-line no-await-in-loop
+            await this.documentClient
+              .batchWrite({
+                RequestItems: requestItems,
+              })
+              .promise()
+
+          requestItems = result.UnprocessedItems
+        } while (requestItems)
+      }),
+    )
   }
 
   /**
@@ -78,9 +114,26 @@ abstract class DynamoDataStorage<TEntity>
     const dynamoQuery: DynamoDB.DocumentClient.QueryInput =
       QueryBuilder.buildQuery(query, this.tableName, this.keys)
 
-    const results = await this.documentClient.query(dynamoQuery).promise()
+    const results = []
+    let lastEvaluatedKey
+    do {
+      const page: DynamoDB.DocumentClient.QueryOutput =
+        // eslint-disable-next-line no-await-in-loop
+        await this.documentClient
+          .query({
+            ...dynamoQuery,
+            ExclusiveStartKey: lastEvaluatedKey,
+          })
+          .promise()
 
-    return results.Items ? (results.Items as TResultEntity[]) : []
+      if (page.Items?.length) {
+        results.push(...page.Items)
+      }
+
+      lastEvaluatedKey = page.LastEvaluatedKey
+    } while (lastEvaluatedKey)
+
+    return results as TResultEntity[]
   }
 
   public async findOne(
@@ -110,7 +163,10 @@ abstract class DynamoDataStorage<TEntity>
       .promise()
   }
 
-  public async batchRemove(entities: Partial<TEntity>[]): Promise<void> {
+  public async batchRemove(
+    entities: Partial<TEntity>[],
+    batchSize = 24,
+  ): Promise<void> {
     const keyPairs = (entities as TEntity[]).map(this.getKeyPairFromModel)
 
     const items: DynamoDB.DocumentClient.WriteRequests = keyPairs.map(
@@ -121,16 +177,13 @@ abstract class DynamoDataStorage<TEntity>
       }),
     )
 
-    await this.documentClient
-      .batchWrite({
-        RequestItems: {
-          [this.tableName]: items,
-        },
-      })
-      .promise()
+    await this.batchWriteRequest(items, batchSize)
   }
 
-  public async batchSave(entities: TEntity[]): Promise<TEntity[]> {
+  public async batchSave(
+    entities: TEntity[],
+    batchSize = 24,
+  ): Promise<TEntity[]> {
     const items: DynamoDB.DocumentClient.WriteRequests = entities.map(
       (entity) => ({
         PutRequest: {
@@ -139,13 +192,7 @@ abstract class DynamoDataStorage<TEntity>
       }),
     )
 
-    await this.documentClient
-      .batchWrite({
-        RequestItems: {
-          [this.tableName]: items,
-        },
-      })
-      .promise()
+    await this.batchWriteRequest(items, batchSize)
 
     return entities
   }
