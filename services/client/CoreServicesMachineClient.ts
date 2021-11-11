@@ -10,7 +10,7 @@ class CoreServicesMachineClient extends MachineClient {
    * @param {Array<string | number>>} params an optional array of strings and numbers to be formatted into the query.
    * @protected
    */
-  protected async runQuery<TReturn>(
+  public async runQuery<TReturn>(
     service: CoreServiceStack,
     query: string,
     params?: Array<string | number>,
