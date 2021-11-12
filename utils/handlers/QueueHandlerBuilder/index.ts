@@ -94,6 +94,8 @@ class QueueHandlerBuilder<
     TMessage,
     TMessage extends AWSLambda.DynamoDBStreamEvent
       ? DynamoStreamRecord<TParsedBody>[]
+      : TMessage extends AWSLambda.SQSEvent
+      ? TParsedBody[]
       : TParsedBody,
     TController
   > {
