@@ -45,19 +45,19 @@ class LambdaHandlerBuilder<TBody, TController> {
    * Defines the action on the controller class.
    * @param expression The expression that points to the action.
    */
-  public withAction<TActionResult = void>(
+  public withAction<TEventBody, TActionResult = void>(
     expression: (
       controller: TController,
     ) => (
-      event: TBody,
+      event: TEventBody,
       context: AWSLambda.Context,
       callback: AWSLambda.Callback,
     ) => Promise<TActionResult>,
-  ): LambdaHandlerBuilder<TBody, TController> {
+  ): LambdaHandlerBuilder<TEventBody, TController> {
     this.actionExpression = new EncapsulatedExpression<TController>()
     expression(this.actionExpression.asCapturable())
 
-    return this as unknown as LambdaHandlerBuilder<TBody, TController>
+    return this as unknown as LambdaHandlerBuilder<TEventBody, TController>
   }
 
   /**
