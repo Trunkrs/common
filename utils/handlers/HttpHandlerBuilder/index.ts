@@ -174,12 +174,10 @@ class HttpHandlerBuilder<TContext, TInput> {
     const middlewareContext = await this.executeMiddleWare(event)
 
     let input = {}
-    if (this.#useBodyInput && event.body) {
-      input = this.serializer.deserialize(event.body)
-    }
-
     if (this.#useQueryInput) {
       input = parseQueryString(event.rawQueryString)
+    } else if (event.body) {
+      input = this.serializer.deserialize(event.body)
     }
 
     if (this.#schema) {

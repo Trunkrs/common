@@ -138,17 +138,12 @@ class HttpControllerFactory {
 
     const controller = ControllerFactory.provide<any>(descriptor.controller)
 
-    console.log('Route input: ', input)
-    console.log('Route param descriptor: ', descriptor.params)
-
     const params: unknown[] = descriptor.params.map(
       ({ source, parameterKey }) => {
         const paramSource = HttpControllerFactory.getParamSource(source, input)
         return parameterKey ? (paramSource ?? {})[parameterKey] : paramSource
       },
     )
-
-    console.log('Route params: ', params)
 
     // eslint-disable-next-line prefer-spread
     return controller[descriptor.action].apply(controller, params)
