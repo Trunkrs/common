@@ -32,9 +32,16 @@ class S3Cache extends Cache {
         .promise()
 
       const { [this.expirationTagName]: expiration } = meta.Metadata as Metadata
-      return this.isValidItem({
+      const isValid = this.isValidItem({
         expiration: new Date(expiration),
       } as CacheItem)
+
+      if (!isValid) {
+        await this.remove(key)
+        return false
+      }
+
+      return isValid
     } catch (error) {
       const s3Error = error as AWSError
       if (s3Error.statusCode === 404) {
