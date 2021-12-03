@@ -144,7 +144,7 @@ class QueryBuilder {
     }
     console.log('Execution ddb operation', op)
 
-    return op
+    return op as QueryOperation
   }
 }
 
