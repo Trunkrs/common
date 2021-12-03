@@ -125,7 +125,7 @@ class QueryBuilder {
 
     const keyExpression = this.buildExpression(keyCondition)
 
-    return {
+    const op = {
       operation: keyExpression ? 'Query' : 'Scan',
       query: {
         TableName: tableName,
@@ -142,6 +142,9 @@ class QueryBuilder {
         ExpressionAttributeValues: this.buildAttributeValues(where),
       },
     }
+    console.log('Execution ddb operation', op)
+
+    return op
   }
 }
 
