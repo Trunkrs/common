@@ -1,15 +1,9 @@
-import { AWSError, DynamoDB } from 'aws-sdk'
+import { DynamoDB } from 'aws-sdk'
 
-import { BatchWriteItemRequestMap, Key } from 'aws-sdk/clients/dynamodb'
+import { BatchWriteItemRequestMap } from 'aws-sdk/clients/dynamodb'
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
 
-import { PromiseResult } from 'aws-sdk/lib/request'
-import {
-  PrimaryKey,
-  QueryBuilder,
-  QueryParameters,
-  QueryOperation,
-} from './utils'
+import { PrimaryKey, QueryBuilder, QueryParameters } from './utils'
 import BaseDynamoDataStorage from './BaseDynamoDataStorage'
 import DataStorage from './interfaces/DataStorage'
 import BatchSizeTooBigError from './BatchSizeTooBigError'
@@ -20,19 +14,6 @@ abstract class DynamoDataStorage<TEntity>
 {
   protected constructor(tableName: string) {
     super(tableName)
-  }
-
-  private executeQueryOperation(
-    { operation, query }: QueryOperation,
-    lastKey?: Key,
-  ): Promise<PromiseResult<DocumentClient.QueryOutput, AWSError>> {
-    return operation === 'Query'
-      ? this.documentClient
-          .query({ ...query, ExclusiveStartKey: lastKey })
-          .promise()
-      : this.documentClient
-          .scan({ ...query, ExclusiveStartKey: lastKey })
-          .promise()
   }
 
   protected async batchWriteRequest(
@@ -171,7 +152,6 @@ abstract class DynamoDataStorage<TEntity>
     // eslint-disable-next-line no-await-in-loop
     const results: DocumentClient.QueryOutput =
       await this.executeQueryOperation(operation)
-
     return results.Items ? (results.Items[0] as TEntity) : null
   }
 

@@ -1,4 +1,4 @@
-import { DynamoDB } from 'aws-sdk'
+import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
 
 import BaseDynamoDataStorage from './BaseDynamoDataStorage'
 import { QueryBuilder, QueryParameters } from './utils'
@@ -18,12 +18,31 @@ abstract class DynamoIndexDataStorage<TEntity>
   public async find<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
   ): Promise<TResultEntity[]> {
-    const dynamoQuery: DynamoDB.DocumentClient.QueryInput =
-      QueryBuilder.buildQuery(query, this.tableName, this.keys, this.indexName)
+    const operation = QueryBuilder.buildQuery(
+      query,
+      this.tableName,
+      this.keys,
+      this.indexName,
+    )
 
-    const results = await this.documentClient.query(dynamoQuery).promise()
+    const results = []
+    let lastEvaluatedKey
 
-    return results.Items ? (results.Items as TResultEntity[]) : []
+    do {
+      // eslint-disable-next-line no-await-in-loop
+      const page: DocumentClient.QueryOutput = await this.executeQueryOperation(
+        operation,
+        lastEvaluatedKey,
+      )
+
+      if (page.Items?.length) {
+        results.push(...page.Items)
+      }
+
+      lastEvaluatedKey = page.LastEvaluatedKey
+    } while (lastEvaluatedKey)
+
+    return results as TResultEntity[]
   }
 
   public async findOne(
@@ -34,16 +53,16 @@ abstract class DynamoIndexDataStorage<TEntity>
       limit: 1,
     }
 
-    const dynamoQuery: DynamoDB.DocumentClient.QueryInput =
-      QueryBuilder.buildQuery(
-        limitedQuery,
-        this.tableName,
-        this.keys,
-        this.indexName,
-      )
+    const operation = QueryBuilder.buildQuery(
+      limitedQuery,
+      this.tableName,
+      this.keys,
+      this.indexName,
+    )
 
-    const results = await this.documentClient.query(dynamoQuery).promise()
-
+    // eslint-disable-next-line no-await-in-loop
+    const results: DocumentClient.QueryOutput =
+      await this.executeQueryOperation(operation)
     return results.Items ? (results.Items[0] as TEntity) : null
   }
 }
