@@ -10,6 +10,11 @@ interface SplitConditionalKeys<TEntity> {
   filterCondition: WhereParameters<TEntity>
 }
 
+export interface QueryOperation {
+  operation: 'Query' | 'Scan'
+  query: DynamoDB.DocumentClient.QueryInput
+}
+
 class QueryBuilder {
   private static buildProjectionExpression<TEntity>(
     selectStatement: Array<keyof TEntity>,
@@ -110,7 +115,7 @@ class QueryBuilder {
     tableName: string,
     primaryKeys: Array<keyof TEntity>,
     indexName?: string,
-  ): DynamoDB.DocumentClient.QueryInput {
+  ): QueryOperation {
     const { where, limit, select } = query
 
     const { keyCondition, filterCondition } = this.splitKeyAndFilterCondition(
@@ -118,19 +123,24 @@ class QueryBuilder {
       primaryKeys,
     )
 
+    const keyExpression = this.buildExpression(keyCondition)
+
     return {
-      TableName: tableName,
-      IndexName: indexName,
-      Limit: limit,
-      ProjectionExpression: select
-        ? QueryBuilder.buildProjectionExpression(select)
-        : undefined,
-      KeyConditionExpression: this.buildExpression(keyCondition),
-      FilterExpression: this.buildExpression(filterCondition),
-      ExpressionAttributeNames: QueryBuilder.buildAttributeNames(where) as {
-        [key: string]: string
+      operation: keyExpression ? 'Query' : 'Scan',
+      query: {
+        TableName: tableName,
+        IndexName: indexName,
+        Limit: limit,
+        ProjectionExpression: select
+          ? QueryBuilder.buildProjectionExpression(select)
+          : undefined,
+        KeyConditionExpression: keyExpression,
+        FilterExpression: this.buildExpression(filterCondition),
+        ExpressionAttributeNames: QueryBuilder.buildAttributeNames(where) as {
+          [key: string]: string
+        },
+        ExpressionAttributeValues: this.buildAttributeValues(where),
       },
-      ExpressionAttributeValues: this.buildAttributeValues(where),
     }
   }
 }
