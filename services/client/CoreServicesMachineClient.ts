@@ -1,5 +1,6 @@
 import { CoreServiceStack } from '../../models/enum'
 import MachineClient from './MachineClient'
+import { CoreServicesRequestFailedError } from '../../models/errors'
 
 interface CoreServicesQueryInput {
   query: string
@@ -7,7 +8,9 @@ interface CoreServicesQueryInput {
 }
 
 interface CoreServicesQueryOutput<TReturn> {
-  result: TReturn
+  result?: TReturn
+  message?: string
+  stackTrace?: string
 }
 
 class CoreServicesMachineClient extends MachineClient {
@@ -24,7 +27,7 @@ class CoreServicesMachineClient extends MachineClient {
     query: string,
     params?: Array<string | number>,
   ): Promise<TReturn> {
-    const { result } = await this.put<
+    const response = await this.put<
       CoreServicesQueryInput,
       CoreServicesQueryOutput<TReturn>
     >(`/${service}/private/query`, {
@@ -32,7 +35,16 @@ class CoreServicesMachineClient extends MachineClient {
       params,
     })
 
-    return result
+    if (!response.result) {
+      throw new CoreServicesRequestFailedError(
+        response.stackTrace ||
+          'no stacktrace received, it is likely there was no result',
+        response.message ||
+          'no message received, it is likely there was no result',
+      )
+    }
+
+    return response.result
   }
 }
 
