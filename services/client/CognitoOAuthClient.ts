@@ -1,6 +1,6 @@
 import OAuthClient, {
   ClientCredentialsRequest,
-  OAuthResponse,
+  OAuthResponse, RawOAuthResponse,
 } from './OAuthClient'
 import { MimeType } from '../../models/enum'
 
@@ -9,7 +9,7 @@ class CognitoOAuthClient extends OAuthClient {
     credentials: ClientCredentialsRequest,
   ): Promise<OAuthResponse> {
     try {
-      const { data } = await this.httpClient.post({
+      const data = await this.httpClient.post<RawOAuthResponse>({
         url: `${credentials.domain}/oauth2/token?grant_type=client_credentials`,
         authentication: {
           username: credentials.clientId,
