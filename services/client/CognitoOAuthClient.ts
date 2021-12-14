@@ -18,6 +18,7 @@ class CognitoOAuthClient extends OAuthClient {
         headers: {
           'Content-Type': MimeType.FormUrlEncoded,
         },
+        params: {},
       })
 
       return OAuthClient.toOAuthResponse(data)
