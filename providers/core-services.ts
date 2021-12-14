@@ -21,6 +21,11 @@ export const coreServicesMachineClient =
     'CoreServicesMachineClient',
   )
 
+/**
+ * Configures the machine client and dependencies for interaction with core services.
+ * @param baseUrl The base url of the services.
+ * @param clientSecretName The app client secret name.
+ */
 const configureCoreServices = (
   baseUrl: string,
   clientSecretName: string,

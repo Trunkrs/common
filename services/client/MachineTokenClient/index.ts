@@ -1,20 +1,18 @@
 import SecretsClient from '../../aws/SecretsClient'
 
 import { AppClient } from '../../../models/oauth'
-import { JSONSerializer } from '../../../utils/serialization'
+import { Serializer } from '../../../utils/serialization'
 
 import OAuthClient from '../OAuthClient'
 
 import TokenNotFoundError from './TokenNotFoundError'
-
-export { default as TokenNotFoundError } from './TokenNotFoundError'
 
 class MachineTokenClient {
   public constructor(
     protected readonly appClientSecretName: string,
     protected readonly secretsClient: SecretsClient,
     protected readonly oAuthClient: OAuthClient,
-    protected readonly serializer: JSONSerializer,
+    protected readonly serializer: Serializer,
   ) {}
 
   public async getMachineToken(): Promise<string> {
