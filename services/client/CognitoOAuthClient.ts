@@ -10,7 +10,7 @@ class CognitoOAuthClient extends OAuthClient {
   ): Promise<OAuthResponse> {
     try {
       const { data } = await this.httpClient.post({
-        url: `${credentials.domain}/oauth2/token?grant_type/client_credentials`,
+        url: `${credentials.domain}/oauth2/token?grant_type=client_credentials`,
         authentication: {
           username: credentials.clientId,
           password: credentials.clientSecret,
@@ -18,7 +18,6 @@ class CognitoOAuthClient extends OAuthClient {
         headers: {
           'content-type': MimeType.FormUrlEncoded,
         },
-        params: {},
       })
 
       return OAuthClient.toOAuthResponse(data)
