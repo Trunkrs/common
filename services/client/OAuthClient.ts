@@ -1,5 +1,9 @@
 import { OAuthErrorCode } from '../../models/enum'
-import { HttpRequestError, OAuthClientError } from '../../models/errors'
+import {
+  HttpRequestError,
+  OAuthClientError,
+  OAuthExchangeFailedError,
+} from '../../models/errors'
 
 import { HttpClient } from './HttpClient'
 
@@ -140,11 +144,15 @@ class OAuthClient implements IOAuthClient {
 
   protected static toOAuthError<TErrorCode = OAuthErrorCode>(
     axiosError: HttpRequestError,
-  ): OAuthClientError<TErrorCode> {
-    return new OAuthClientError<TErrorCode>(
-      axiosError.responseData?.data.error as TErrorCode,
-      axiosError.responseData?.data.error_description,
-    )
+  ): OAuthClientError<TErrorCode> | OAuthExchangeFailedError {
+    if (axiosError?.responseData?.data) {
+      return new OAuthClientError<TErrorCode>(
+        axiosError.responseData?.data.error as TErrorCode,
+        axiosError.responseData?.data.error_description,
+      )
+    }
+
+    return new OAuthExchangeFailedError(axiosError)
   }
 }
 
