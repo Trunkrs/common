@@ -16,7 +16,7 @@ class CognitoOAuthClient extends OAuthClient {
           password: credentials.clientSecret,
         },
         headers: {
-          'Content-Type': MimeType.FormUrlEncoded,
+          'content-type': MimeType.FormUrlEncoded,
         },
         params: {},
       })
