@@ -1,6 +1,15 @@
 import { CoreServiceStack } from '../../models/enum'
 import MachineClient from './MachineClient'
 
+interface CoreServicesQueryInput {
+  query: string
+  params?: Array<string | number>
+}
+
+interface CoreServicesQueryOutput<TReturn> {
+  result: TReturn
+}
+
 class CoreServicesMachineClient extends MachineClient {
   /**
    * Runs an SQL query against the CoreServices postgres database.
@@ -15,12 +24,12 @@ class CoreServicesMachineClient extends MachineClient {
     query: string,
     params?: Array<string | number>,
   ): Promise<TReturn> {
-    const { result } = await this.httpClient.put({
-      url: `/${service}/private/query`,
-      params: {
-        query,
-        params,
-      },
+    const { result } = await this.put<
+      CoreServicesQueryInput,
+      CoreServicesQueryOutput<TReturn>
+    >(`/${service}/private/query`, {
+      query,
+      params,
     })
 
     return result
