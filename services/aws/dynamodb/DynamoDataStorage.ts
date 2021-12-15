@@ -34,6 +34,7 @@ abstract class DynamoDataStorage<TEntity>
         let requestItems: BatchWriteItemRequestMap | undefined = {
           [this.tableName]: batch,
         }
+        console.log(JSON.stringify(requestItems, null, 2))
 
         do {
           const result: DynamoDB.DocumentClient.BatchWriteItemOutput =
