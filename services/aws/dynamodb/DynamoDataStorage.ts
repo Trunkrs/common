@@ -26,7 +26,7 @@ abstract class DynamoDataStorage<TEntity>
 
     const batches = []
     while (writeRequests.length) {
-      batches.push(writeRequests.splice(0, batchSize))
+      batches.push(writeRequests.splice(0, batchSize).filter(element => element))
     }
 
     await Promise.all(
