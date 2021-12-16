@@ -19,7 +19,7 @@ export const HttpClient =
 
 const utilsProvider = new ServiceProvider()
 
-utilsProvider.register(HttpClient, Lifecycle.Singleton, () => new AxiosClient())
+utilsProvider.register(HttpClient, Lifecycle.Transient, () => new AxiosClient())
 
 utilsProvider.register(Logger, Lifecycle.Singleton, () => new ConsoleLogger())
 
