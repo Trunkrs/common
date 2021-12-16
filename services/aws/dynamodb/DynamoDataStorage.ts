@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { DynamoDB } from 'aws-sdk'
 
 import { BatchWriteItemRequestMap } from 'aws-sdk/clients/dynamodb'
@@ -26,7 +27,9 @@ abstract class DynamoDataStorage<TEntity>
 
     const batches = []
     while (writeRequests.length) {
-      batches.push(writeRequests.splice(0, batchSize).filter(element => element))
+      batches.push(
+        writeRequests.splice(0, batchSize).filter((element) => element),
+      )
     }
 
     await Promise.all(
@@ -45,7 +48,7 @@ abstract class DynamoDataStorage<TEntity>
               .promise()
 
           requestItems = result.UnprocessedItems
-        } while (requestItems)
+        } while (requestItems && Object.keys(requestItems).length > 0)
       }),
     )
   }
@@ -57,7 +60,9 @@ abstract class DynamoDataStorage<TEntity>
    * @returns {TEntity | null} The entity that was found or when no entity is found a null reference.
    * @template TEntity
    */
-  public async get(key: PrimaryKey<TEntity>): Promise<TEntity | null> {
+  public async get(
+    key: PrimaryKey<TEntity>,
+  ): Promise<TEntity | null> {
     const dynamoGetRequest: DynamoDB.DocumentClient.GetItemInput = {
       TableName: this.tableName,
       Key: key,
@@ -80,7 +85,7 @@ abstract class DynamoDataStorage<TEntity>
   ): Promise<TEntity[]> {
     const batches = []
     while (keys.length) {
-      batches.push(keys.splice(0, batchSize))
+      batches.push(keys.splice(0, batchSize).filter((key) => key))
     }
 
     const batchResults = await Promise.all(
