@@ -26,10 +26,12 @@ class SecretsClient {
     secretName: string,
     secretValue: string,
   ): Promise<void> {
-    await this.secretsManager.putSecretValue({
-      SecretId: secretName,
-      SecretString: secretValue,
-    })
+    await this.secretsManager
+      .putSecretValue({
+        SecretId: secretName,
+        SecretString: secretValue,
+      })
+      .promise()
 
     const isCacheNotEmpty = await this.cache.hasKey(secretName)
     if (isCacheNotEmpty) {
