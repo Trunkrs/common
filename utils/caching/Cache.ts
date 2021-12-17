@@ -1,4 +1,4 @@
-import isAfter from 'date-fns/isAfter'
+import isBefore from 'date-fns/isBefore'
 import addMilliseconds from 'date-fns/addMilliseconds'
 
 export interface CacheItem {
@@ -61,7 +61,7 @@ abstract class Cache {
   }
 
   protected isValidItem(item: CacheItem): boolean {
-    return isAfter(new Date(), item.expiration)
+    return isBefore(new Date(), item.expiration)
   }
 }
 
