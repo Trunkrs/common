@@ -1,7 +1,7 @@
 import Cache, { CacheItem } from './Cache'
 
 class MemoryCache extends Cache {
-  private readonly cache: Map<string, CacheItem> = new Map<string, CacheItem>()
+  protected readonly cache: Map<string, CacheItem> = new Map<string, CacheItem>()
 
   public constructor(stalenessTimeout = 0) {
     super(stalenessTimeout)
