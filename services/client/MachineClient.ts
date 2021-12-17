@@ -17,7 +17,7 @@ class MachineClient {
     protected readonly baseUrl: string,
   ) {}
 
-  private createUrl(resource: string): string {
+  protected createUrl(resource: string): string {
     return resource.startsWith('/')
       ? `${this.baseUrl}${resource}`
       : `${this.baseUrl}/${resource}`

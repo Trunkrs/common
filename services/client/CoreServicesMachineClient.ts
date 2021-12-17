@@ -27,12 +27,18 @@ class CoreServicesMachineClient extends MachineClient {
     query: string,
     params?: Array<string | number>,
   ): Promise<TReturn> {
-    const response = await this.put<
-      CoreServicesQueryInput,
-      CoreServicesQueryOutput<TReturn>
-    >(`/${service}/private/query`, {
-      query,
-      params,
+    await this.checkBearerToken()
+
+    const response = await this.httpClient.put<
+      CoreServicesQueryOutput<TReturn>,
+      CoreServicesQueryInput
+    >({
+      url: this.createUrl(`/${service}/private/query`),
+      params: {
+        query,
+        params,
+      },
+      timeout: 30000,
     })
 
     if (!response.result) {
