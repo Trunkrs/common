@@ -1,5 +1,4 @@
 import ServiceProvider, { Lifecycle } from '../utils/service-provider'
-import { MemoryCache } from '../utils/caching'
 
 import {
   CognitoOAuthClient,
@@ -9,7 +8,7 @@ import {
 import SecretsClient from '../services/aws/SecretsClient'
 
 import awsProvider from './aws'
-import utilsProvider, { Serializer, HttpClient } from './utils'
+import utilsProvider, { Serializer, HttpClient, MemoryCache } from './utils'
 
 export const coreServicesMachineTokenClient =
   ServiceProvider.createSymbol<MachineTokenClient>(

@@ -5,7 +5,7 @@ import {
   JSONSerializer,
   Serializer as GenericSerializer,
 } from '../utils/serialization'
-import { MemoryCache } from '../utils/caching'
+import { MemoryCache as GenericMemoryCache } from '../utils/caching'
 
 import { HttpClient as GenericHttpClient } from '../services/client/HttpClient'
 import AxiosClient from '../services/client/AxiosClient'
@@ -14,12 +14,16 @@ import { OAuthClient } from '../services/client'
 export const Logger = ServiceProvider.createSymbol<GenericLogger>('Logger')
 export const Serializer =
   ServiceProvider.createSymbol<GenericSerializer>('Serializer')
+
 export const HttpClient =
   ServiceProvider.createSymbol<GenericHttpClient>('HttpClient')
 
+export const MemoryCache =
+  ServiceProvider.createSymbol<GenericMemoryCache>('MemoryCache')
+
 const utilsProvider = new ServiceProvider()
 
-utilsProvider.register(HttpClient, Lifecycle.Singleton, () => new AxiosClient())
+utilsProvider.register(HttpClient, Lifecycle.Transient, () => new AxiosClient())
 
 utilsProvider.register(Logger, Lifecycle.Singleton, () => new ConsoleLogger())
 

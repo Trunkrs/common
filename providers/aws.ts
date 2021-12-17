@@ -1,9 +1,8 @@
 import ServiceProvider, { Lifecycle } from '../utils/service-provider'
 
 import SecretsClient from '../services/aws/SecretsClient'
-import { MemoryCache } from '../utils/caching'
 
-import utilsProvider from './utils'
+import utilsProvider, { MemoryCache } from './utils'
 
 const awsProvider = new ServiceProvider()
 
