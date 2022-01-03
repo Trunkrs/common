@@ -7,7 +7,7 @@ import MachineTokenClient from './MachineTokenClient'
 type ResponseType = HttpRequestParams['responseType']
 
 class MachineClient {
-  private bearerTokenInterceptorId?: number
+  protected bearerTokenInterceptorId?: number
 
   public constructor(
     protected readonly machineTokenClient: MachineTokenClient,
@@ -23,7 +23,7 @@ class MachineClient {
       : `${this.baseUrl}/${resource}`
   }
 
-  private get axiosClient() {
+  protected get axiosClient() {
     const client = this.httpClient as AxiosClient
     return client?.axiosClient
   }
@@ -86,10 +86,16 @@ class MachineClient {
     })
   }
 
-  protected async checkBearerToken(): Promise<void> {
+  protected async getBearerToken(): Promise<string> {
     const token = await this.cache.getOrAdd(this.secretCacheKey, () => {
       return this.machineTokenClient.getMachineToken()
     })
+
+    return token
+  }
+
+  protected async checkBearerToken(): Promise<void> {
+    const token = await this.getBearerToken()
 
     const authorizationHeader = `Bearer ${token}`
 
