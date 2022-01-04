@@ -35,16 +35,16 @@ class S3Cache extends Cache {
 
       const { [this.expirationTagName]: expiration } = meta.Metadata as Metadata
 
-      console.log('expiration: ', new Date(expiration))
+      console.log('expiration: ', new Date(Number(expiration)))
       console.log(
         'is valid item:',
         this.isValidItem({
-          expiration: new Date(expiration),
+          expiration: new Date(Number(expiration)),
         } as CacheItem),
       )
 
       return this.isValidItem({
-        expiration: new Date(expiration),
+        expiration: new Date(Number(expiration)),
       } as CacheItem)
     } catch (error) {
       const s3Error = error as AWSError
