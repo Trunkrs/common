@@ -31,7 +31,18 @@ class S3Cache extends Cache {
         })
         .promise()
 
+      console.log(JSON.stringify(meta.Metadata, null, 2))
+
       const { [this.expirationTagName]: expiration } = meta.Metadata as Metadata
+
+      console.log('expiration: ', new Date(expiration))
+      console.log(
+        'is valid item:',
+        this.isValidItem({
+          expiration: new Date(expiration),
+        } as CacheItem),
+      )
+
       return this.isValidItem({
         expiration: new Date(expiration),
       } as CacheItem)
@@ -73,6 +84,7 @@ class S3Cache extends Cache {
       })
       .promise()
 
+    console.log('deserializing')
     return this.serializer.deserialize<TValue>(object.Body as Buffer)
   }
 
@@ -82,6 +94,7 @@ class S3Cache extends Cache {
   ): Promise<TValue> {
     const value = await this.get<TValue>(key)
     if (value) {
+      console.log('found the value: ', value)
       return value
     }
 
