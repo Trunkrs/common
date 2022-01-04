@@ -31,8 +31,6 @@ class S3Cache extends Cache {
         })
         .promise()
 
-      console.log(JSON.stringify(meta.Metadata, null, 2))
-
       const { [this.expirationTagName]: expiration } = meta.Metadata as Metadata
       return this.isValidItem({
         expiration: new Date(expiration),
