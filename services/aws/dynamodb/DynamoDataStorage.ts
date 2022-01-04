@@ -118,7 +118,7 @@ abstract class DynamoDataStorage<TEntity>
   public async find<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
   ): Promise<TResultEntity[]> {
-    const operation = QueryBuilder.buildQuery(query, this.tableName, this.keys)
+    const operation = QueryBuilder.buildQuery(query, this.tableName, this.keys, query.queryOptions?.operation)
 
     const results = []
     let lastEvaluatedKey
@@ -152,6 +152,7 @@ abstract class DynamoDataStorage<TEntity>
       limitedQuery,
       this.tableName,
       this.keys,
+      query.queryOptions?.operation,
     )
 
     // eslint-disable-next-line no-await-in-loop

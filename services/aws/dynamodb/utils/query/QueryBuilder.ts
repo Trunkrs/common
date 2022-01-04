@@ -114,6 +114,7 @@ class QueryBuilder {
     query: QueryParameters<TEntity>,
     tableName: string,
     primaryKeys: Array<keyof TEntity>,
+    forceOperation?: 'Scan' | 'Query',
     indexName?: string,
   ): QueryOperation {
     const { where, limit, select } = query
@@ -124,9 +125,10 @@ class QueryBuilder {
     )
 
     const keyExpression = this.buildExpression(keyCondition)
+    const operation = forceOperation ?? keyExpression ? 'Query' : 'Scan'
 
     const op = {
-      operation: keyExpression ? 'Query' : 'Scan',
+      operation,
       query: {
         TableName: tableName,
         IndexName: indexName,

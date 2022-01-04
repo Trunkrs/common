@@ -22,6 +22,7 @@ abstract class DynamoIndexDataStorage<TEntity>
       query,
       this.tableName,
       this.keys,
+      query.queryOptions?.operation,
       this.indexName,
     )
 
@@ -57,6 +58,7 @@ abstract class DynamoIndexDataStorage<TEntity>
       limitedQuery,
       this.tableName,
       this.keys,
+      query.queryOptions?.operation,
       this.indexName,
     )
 
