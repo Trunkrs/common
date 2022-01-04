@@ -5,7 +5,7 @@ import { Serializer } from '../serialization'
 import Cache, { CacheItem } from './Cache'
 
 class S3Cache extends Cache {
-  private readonly expirationTagName = 'CacheExpiration'
+  private readonly expirationTagName = 'cache-expiration'
 
   private readonly s3Client = new S3()
 
