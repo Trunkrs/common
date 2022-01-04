@@ -118,26 +118,15 @@ abstract class DynamoDataStorage<TEntity>
   public async find<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
   ): Promise<TResultEntity[]> {
-    const operation = QueryBuilder.buildQuery(query, this.tableName, this.keys, query.queryOptions?.operation)
+    const queryOp = query.queryOptions?.operation ?? 'Query'
+    const builderParams = { query, tableName: this.tableName, primaryKeys: this.keys }
 
-    const results = []
-    let lastEvaluatedKey
+    const ddbQuery = queryOp === 'Scan'
+      ? QueryBuilder.buildScan(builderParams)
+      : QueryBuilder.buildQuery(builderParams)
 
-    do {
-      // eslint-disable-next-line no-await-in-loop
-      const page: DocumentClient.QueryOutput = await this.executeQueryOperation(
-        operation,
-        lastEvaluatedKey,
-      )
-
-      if (page.Items?.length) {
-        results.push(...page.Items)
-      }
-
-      lastEvaluatedKey = page.LastEvaluatedKey
-    } while (lastEvaluatedKey)
-
-    return results as TResultEntity[]
+    const result = await this.executeQueryOperation<TResultEntity>(queryOp, ddbQuery)
+    return result
   }
 
   public async findOne(
@@ -148,17 +137,8 @@ abstract class DynamoDataStorage<TEntity>
       limit: 1,
     }
 
-    const operation = QueryBuilder.buildQuery(
-      limitedQuery,
-      this.tableName,
-      this.keys,
-      query.queryOptions?.operation,
-    )
-
-    // eslint-disable-next-line no-await-in-loop
-    const results: DocumentClient.QueryOutput =
-      await this.executeQueryOperation(operation)
-    return results.Items ? (results.Items[0] as TEntity) : null
+    const [result] = await this.find(limitedQuery)
+    return result ?? null
   }
 
   public async remove(entity: Partial<TEntity>): Promise<void> {

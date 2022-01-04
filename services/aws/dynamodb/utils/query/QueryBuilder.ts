@@ -4,15 +4,18 @@ import DynamoOperator from '../operators/DynamoOperator'
 
 import WhereParameters from './QueryWhereStatement'
 import QueryParameters from './QueryParameters'
+import { OperationNotSupportedError } from '../../../../../models/errors'
 
 interface SplitConditionalKeys<TEntity> {
   keyCondition: WhereParameters<TEntity>
   filterCondition: WhereParameters<TEntity>
 }
 
-export interface QueryOperation {
-  operation: 'Query' | 'Scan'
-  query: DynamoDB.DocumentClient.QueryInput
+export interface QueryBuilderParams<TEntity> {
+  query: QueryParameters<TEntity>
+  tableName: string
+  primaryKeys: Array<keyof TEntity>
+  indexName?: string
 }
 
 class QueryBuilder {
@@ -110,43 +113,66 @@ class QueryBuilder {
     }
   }
 
-  public static buildQuery<TEntity>(
-    query: QueryParameters<TEntity>,
-    tableName: string,
-    primaryKeys: Array<keyof TEntity>,
-    forceOperation?: 'Scan' | 'Query',
-    indexName?: string,
-  ): QueryOperation {
-    const { where, limit, select } = query
+  public static buildScan<TEntity>({
+    query,
+    tableName,
+    indexName,
+  }: QueryBuilderParams<TEntity>): DynamoDB.DocumentClient.ScanInput {
+    const { where, limit, select, queryOptions } = query
 
+    if (queryOptions?.descendingOrder) {
+      throw new OperationNotSupportedError(
+        `Descending order can't be enforced when using a Scan operation as no index is being evaluated. If descending order is important to the evaluation, please consider using a Query operation instead.`,
+      )
+    }
+
+    const op: DynamoDB.DocumentClient.ScanInput = {
+      TableName: tableName,
+      IndexName: indexName,
+      Limit: limit,
+      ProjectionExpression: select
+        ? QueryBuilder.buildProjectionExpression(select)
+        : undefined,
+      FilterExpression: this.buildExpression(where),
+      ExpressionAttributeNames: QueryBuilder.buildAttributeNames(where) as {
+        [key: string]: string
+      },
+      ExpressionAttributeValues: this.buildAttributeValues(where),
+    }
+
+    return op
+  }
+
+  public static buildQuery<TEntity>({
+    query,
+    primaryKeys,
+    tableName,
+    indexName,
+  }: QueryBuilderParams<TEntity>): DynamoDB.DocumentClient.QueryInput {
+    const { where, limit, select, queryOptions } = query
     const { keyCondition, filterCondition } = this.splitKeyAndFilterCondition(
       where,
       primaryKeys,
     )
 
-    const keyExpression = this.buildExpression(keyCondition)
-    const operation = forceOperation ?? keyExpression ? 'Query' : 'Scan'
-
-    const op = {
-      operation,
-      query: {
-        TableName: tableName,
-        IndexName: indexName,
-        Limit: limit,
-        ProjectionExpression: select
-          ? QueryBuilder.buildProjectionExpression(select)
-          : undefined,
-        KeyConditionExpression: keyExpression,
-        FilterExpression: this.buildExpression(filterCondition),
-        ExpressionAttributeNames: QueryBuilder.buildAttributeNames(where) as {
-          [key: string]: string
-        },
-        ExpressionAttributeValues: this.buildAttributeValues(where),
+    const op: DynamoDB.DocumentClient.QueryInput = {
+      TableName: tableName,
+      IndexName: indexName,
+      Limit: limit,
+      ScanIndexForward: !queryOptions?.descendingOrder,
+      ProjectionExpression: select
+        ? QueryBuilder.buildProjectionExpression(select)
+        : undefined,
+      KeyConditionExpression: this.buildExpression(keyCondition),
+      FilterExpression: this.buildExpression(filterCondition),
+      ExpressionAttributeNames: QueryBuilder.buildAttributeNames(where) as {
+        [key: string]: string
       },
+      ExpressionAttributeValues: this.buildAttributeValues(where),
     }
     console.log('Execution ddb operation', op)
 
-    return op as QueryOperation
+    return op
   }
 }
 
