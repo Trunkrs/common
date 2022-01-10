@@ -138,6 +138,9 @@ class HttpControllerFactory {
 
     const controller = ControllerFactory.provide<any>(descriptor.controller)
 
+    console.log('Action descriptor', descriptor)
+    console.log('Action input', input)
+
     const params: unknown[] = descriptor.params.map(
       ({ source, parameterKey }) => {
         const paramSource = HttpControllerFactory.getParamSource(source, input)
