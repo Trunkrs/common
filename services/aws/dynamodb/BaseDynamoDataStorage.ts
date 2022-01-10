@@ -1,10 +1,6 @@
-import { AWSError, DynamoDB } from 'aws-sdk'
-
-import { Key } from 'aws-sdk/clients/dynamodb'
-import { PromiseResult } from 'aws-sdk/lib/request'
+/* eslint-disable no-await-in-loop */
+import { DynamoDB } from 'aws-sdk'
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
-
-import { QueryOperation } from './utils'
 
 abstract class BaseDynamoDataStorage<TEntity> {
   protected abstract readonly keys: Array<keyof TEntity>
@@ -15,17 +11,30 @@ abstract class BaseDynamoDataStorage<TEntity> {
     this.documentClient = new DynamoDB.DocumentClient()
   }
 
-  protected executeQueryOperation(
-    { operation, query }: QueryOperation,
-    lastKey?: Key,
-  ): Promise<PromiseResult<DocumentClient.QueryOutput, AWSError>> {
-    return operation === 'Query'
-      ? this.documentClient
-          .query({ ...query, ExclusiveStartKey: lastKey })
-          .promise()
-      : this.documentClient
-          .scan({ ...query, ExclusiveStartKey: lastKey })
-          .promise()
+  protected async executeOperation<TResultEntity = TEntity>(
+    operation: 'Scan' | 'Query',
+    query: DynamoDB.DocumentClient.ScanInput,
+  ): Promise<TResultEntity[]> {
+    const results = []
+    let lastEvaluatedKey
+
+    do {
+      const page: DocumentClient.QueryOutput = operation
+        ? await this.documentClient
+            .scan({ ...query, ExclusiveStartKey: lastEvaluatedKey })
+            .promise()
+        : await this.documentClient
+            .query({ ...query, ExclusiveStartKey: lastEvaluatedKey })
+            .promise()
+
+      if (page.Items?.length) {
+        results.push(...page.Items)
+      }
+
+      lastEvaluatedKey = page.LastEvaluatedKey
+    } while (lastEvaluatedKey)
+
+    return results as TResultEntity[]
   }
 
   protected getKeyPairFromModel(model: TEntity): Partial<TEntity> {

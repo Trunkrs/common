@@ -1,5 +1,3 @@
-import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
-
 import BaseDynamoDataStorage from './BaseDynamoDataStorage'
 import { QueryBuilder, QueryParameters } from './utils'
 import QueryableDataStorage from './interfaces/QueryableDataStorage'
@@ -18,31 +16,24 @@ abstract class DynamoIndexDataStorage<TEntity>
   public async find<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
   ): Promise<TResultEntity[]> {
-    const operation = QueryBuilder.buildQuery(
+    const queryOp = query.queryOptions?.operation ?? 'Query'
+    const builderParams = {
       query,
-      this.tableName,
-      this.keys,
-      this.indexName,
+      tableName: this.tableName,
+      primaryKeys: this.keys,
+      indexName: this.indexName,
+    }
+
+    const ddbQuery =
+      queryOp === 'Scan'
+        ? QueryBuilder.buildScan(builderParams)
+        : QueryBuilder.buildQuery(builderParams)
+
+    const result = await this.executeOperation<TResultEntity>(
+      queryOp,
+      ddbQuery,
     )
-
-    const results = []
-    let lastEvaluatedKey
-
-    do {
-      // eslint-disable-next-line no-await-in-loop
-      const page: DocumentClient.QueryOutput = await this.executeQueryOperation(
-        operation,
-        lastEvaluatedKey,
-      )
-
-      if (page.Items?.length) {
-        results.push(...page.Items)
-      }
-
-      lastEvaluatedKey = page.LastEvaluatedKey
-    } while (lastEvaluatedKey)
-
-    return results as TResultEntity[]
+    return result
   }
 
   public async findOne(
@@ -53,17 +44,8 @@ abstract class DynamoIndexDataStorage<TEntity>
       limit: 1,
     }
 
-    const operation = QueryBuilder.buildQuery(
-      limitedQuery,
-      this.tableName,
-      this.keys,
-      this.indexName,
-    )
-
-    // eslint-disable-next-line no-await-in-loop
-    const results: DocumentClient.QueryOutput =
-      await this.executeQueryOperation(operation)
-    return results.Items ? (results.Items[0] as TEntity) : null
+    const [result] = await this.find(limitedQuery)
+    return result ?? null
   }
 }
 
