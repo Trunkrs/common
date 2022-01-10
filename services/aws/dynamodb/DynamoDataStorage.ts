@@ -2,7 +2,6 @@
 import { DynamoDB } from 'aws-sdk'
 
 import { BatchWriteItemRequestMap } from 'aws-sdk/clients/dynamodb'
-import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
 
 import { PrimaryKey, QueryBuilder, QueryParameters } from './utils'
 import BaseDynamoDataStorage from './BaseDynamoDataStorage'
@@ -125,7 +124,7 @@ abstract class DynamoDataStorage<TEntity>
       ? QueryBuilder.buildScan(builderParams)
       : QueryBuilder.buildQuery(builderParams)
 
-    const result = await this.executeQueryOperation<TResultEntity>(queryOp, ddbQuery)
+    const result = await this.executeOperation<TResultEntity>(queryOp, ddbQuery)
     return result
   }
 

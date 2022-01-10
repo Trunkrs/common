@@ -11,7 +11,7 @@ abstract class BaseDynamoDataStorage<TEntity> {
     this.documentClient = new DynamoDB.DocumentClient()
   }
 
-  protected async executeQueryOperation<TResultEntity = TEntity>(
+  protected async executeOperation<TResultEntity = TEntity>(
     operation: 'Scan' | 'Query',
     query: DynamoDB.DocumentClient.ScanInput,
   ): Promise<TResultEntity[]> {
