@@ -4,6 +4,7 @@ import DynamoOperator from '../operators/DynamoOperator'
 
 import WhereParameters from './QueryWhereStatement'
 import QueryParameters from './QueryParameters'
+
 import { OperationNotSupportedError } from '../../../../../models/errors'
 
 interface SplitConditionalKeys<TEntity> {
@@ -118,9 +119,9 @@ class QueryBuilder {
     tableName,
     indexName,
   }: QueryBuilderParams<TEntity>): DynamoDB.DocumentClient.ScanInput {
-    const { where, limit, select, queryOptions } = query
+    const { where, limit, select, orderDescending } = query
 
-    if (queryOptions?.descendingOrder) {
+    if (orderDescending) {
       throw new OperationNotSupportedError(
         `Descending order can't be enforced when using a Scan operation as no index is being evaluated. If descending order is important to the evaluation, please consider using a Query operation instead.`,
       )
@@ -149,7 +150,7 @@ class QueryBuilder {
     tableName,
     indexName,
   }: QueryBuilderParams<TEntity>): DynamoDB.DocumentClient.QueryInput {
-    const { where, limit, select, queryOptions } = query
+    const { where, limit, select, orderDescending } = query
     const { keyCondition, filterCondition } = this.splitKeyAndFilterCondition(
       where,
       primaryKeys,
@@ -159,7 +160,7 @@ class QueryBuilder {
       TableName: tableName,
       IndexName: indexName,
       Limit: limit,
-      ScanIndexForward: !queryOptions?.descendingOrder,
+      ScanIndexForward: !orderDescending,
       ProjectionExpression: select
         ? QueryBuilder.buildProjectionExpression(select)
         : undefined,
