@@ -1,5 +1,3 @@
-import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
-
 import BaseDynamoDataStorage from './BaseDynamoDataStorage'
 import { QueryBuilder, QueryParameters } from './utils'
 import QueryableDataStorage from './interfaces/QueryableDataStorage'
