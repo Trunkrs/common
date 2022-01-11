@@ -8,7 +8,12 @@ import {
   LesserThan,
   LesserThanOrEquals,
   NotEquals,
+  And,
+  Or,
+  Exists,
+  NotExists,
 } from './utils/operators'
+import DynamoOperator from './utils/operators/DynamoOperator'
 
 class Operators {
   public static beginsWith(startValue: string): BeginsWith {
@@ -49,6 +54,22 @@ class Operators {
 
   public static notEquals(valueToExclude: number | string): NotEquals {
     return NotEquals.fromValue(valueToExclude)
+  }
+
+  public static and(...innerOperators: DynamoOperator[]): And {
+    return new And(innerOperators)
+  }
+
+  public static or(...innerOperators: DynamoOperator[]): Or {
+    return new Or(innerOperators)
+  }
+
+  public static exists(): Exists {
+    return new Exists()
+  }
+
+  public static notExists(): NotExists {
+    return new NotExists()
   }
 }
 
