@@ -89,7 +89,8 @@ class HttpControllerFactory {
       params: [] as ParameterDescriptor[],
     }
 
-    descriptor?.params.push({ source, parameterKey })
+    // Pre-pend is used as params will be registered in reverse order
+    descriptor?.params.unshift({ source, parameterKey })
 
     HttpControllerFactory.#httpActionByController.set(
       actionIndexKey,
