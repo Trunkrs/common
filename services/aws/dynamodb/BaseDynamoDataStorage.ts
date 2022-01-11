@@ -19,13 +19,14 @@ abstract class BaseDynamoDataStorage<TEntity> {
     let lastEvaluatedKey
 
     do {
-      const page: DocumentClient.QueryOutput = operation
-        ? await this.documentClient
-            .scan({ ...query, ExclusiveStartKey: lastEvaluatedKey })
-            .promise()
-        : await this.documentClient
-            .query({ ...query, ExclusiveStartKey: lastEvaluatedKey })
-            .promise()
+      const page: DocumentClient.QueryOutput =
+        operation === 'Scan'
+          ? await this.documentClient
+              .scan({ ...query, ExclusiveStartKey: lastEvaluatedKey })
+              .promise()
+          : await this.documentClient
+              .query({ ...query, ExclusiveStartKey: lastEvaluatedKey })
+              .promise()
 
       if (page.Items?.length) {
         results.push(...page.Items)
