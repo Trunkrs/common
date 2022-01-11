@@ -7,3 +7,8 @@ export { default as In } from './In'
 export { default as LesserThan } from './LesserThan'
 export { default as LesserThanOrEquals } from './LesserThanOrEquals'
 export { default as NotEquals } from './NotEquals'
+
+export { default as Or } from './Or'
+export { default as And } from './And'
+export { default as Exists } from './Exists'
+export { default as NotExists } from './NotExists'
