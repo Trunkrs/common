@@ -2,7 +2,7 @@ import DynamoOperator from './DynamoOperator'
 
 class And extends DynamoOperator {
   public constructor(private readonly innerOperators: DynamoOperator[]) {
-    super([])
+    super(innerOperators.flatMap((op) => op.attributeValues))
   }
 
   render(attributeName: string): string {
