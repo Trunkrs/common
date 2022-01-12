@@ -29,10 +29,7 @@ abstract class DynamoIndexDataStorage<TEntity>
         ? QueryBuilder.buildScan(builderParams)
         : QueryBuilder.buildQuery(builderParams)
 
-    const result = await this.executeOperation<TResultEntity>(
-      queryOp,
-      ddbQuery,
-    )
+    const result = await this.executeOperation<TResultEntity>(queryOp, ddbQuery)
     return result
   }
 

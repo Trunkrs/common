@@ -18,6 +18,8 @@ abstract class BaseDynamoDataStorage<TEntity> {
     const results = []
     let lastEvaluatedKey
 
+    console.log('DDB Op', query)
+
     do {
       const page: DocumentClient.QueryOutput =
         operation === 'Scan'

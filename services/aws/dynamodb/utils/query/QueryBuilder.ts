@@ -156,7 +156,7 @@ class QueryBuilder {
       primaryKeys,
     )
 
-    const op: DynamoDB.DocumentClient.QueryInput = {
+    const op = {
       TableName: tableName,
       IndexName: indexName,
       Limit: limit,
@@ -171,7 +171,6 @@ class QueryBuilder {
       },
       ExpressionAttributeValues: this.buildAttributeValues(where),
     }
-    console.log('Execution ddb operation', op)
 
     return op
   }
