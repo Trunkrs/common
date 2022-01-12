@@ -6,7 +6,7 @@ class Exists extends DynamoOperator {
   }
 
   render(attributeName: string): string {
-    return `attribute_not_exists(${attributeName})`
+    return `attribute_not_exists(#${attributeName})`
   }
 }
 

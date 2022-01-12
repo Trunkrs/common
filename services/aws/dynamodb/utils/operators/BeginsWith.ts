@@ -5,10 +5,12 @@ class BeginsWith extends DynamoOperator<string> {
     super([startValue])
   }
 
-  public render(attributeName: string): string {
+  public render(attributeName: string, paramOffset?: number): string {
+    const actualOffset = paramOffset ?? 0
+
     return `begins_with(#${attributeName}, ${this.makeAttrValueName(
       attributeName,
-      0,
+      actualOffset,
     )})`
   }
 

@@ -5,10 +5,12 @@ class Contains extends DynamoOperator<string> {
     super([partialValue])
   }
 
-  public render(attributeName: string): string {
+  public render(attributeName: string, paramOffset?: number): string {
+    const actualOffset = paramOffset ?? 0
+
     return `contains(#${attributeName}, ${this.makeAttrValueName(
       attributeName,
-      0,
+      actualOffset,
     )})`
   }
 

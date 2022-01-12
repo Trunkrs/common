@@ -6,8 +6,14 @@ class And extends DynamoOperator {
   }
 
   render(attributeName: string): string {
+    let offset = 0
     const clauseBody = this.innerOperators
-      .map((operator) => operator.render(attributeName))
+      .map((operator) => {
+        const result = operator.render(attributeName, offset)
+        offset += operator.attributeValues.length
+
+        return result
+      })
       .join(' AND ')
 
     return `(${clauseBody})`

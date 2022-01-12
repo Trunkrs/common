@@ -5,10 +5,12 @@ class Between extends DynamoOperator<number> {
     super([valueStart, valueEnd])
   }
 
-  render(attributeName: string): string {
+  render(attributeName: string, paramOffset?: number): string {
+    const actualOffset = paramOffset ?? 0
+
     return `#${attributeName} BETWEEN ${this.makeAttrValueName(
       attributeName,
-      0,
+      actualOffset,
     )} AND ${this.makeAttrValueName(attributeName, 1)}`
   }
 

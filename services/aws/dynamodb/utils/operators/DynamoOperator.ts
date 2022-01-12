@@ -18,8 +18,9 @@ abstract class DynamoOperator<TValue = any> {
   /**
    * Renders the operator into its query string counterpart.
    * @param attributeName The name of the attribute within the datasource.
+   * @param paramOffset The optional parameter offset.
    */
-  public abstract render(attributeName: string): string
+  public abstract render(attributeName: string, paramOffset?: number): string
 }
 
 export default DynamoOperator

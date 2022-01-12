@@ -5,8 +5,13 @@ class GreaterThanOrEquals extends DynamoOperator<number | string> {
     super([valueToExceedOrMatch])
   }
 
-  render(attributeName: string): string {
-    return `#${attributeName} >= ${this.makeAttrValueName(attributeName, 0)}`
+  render(attributeName: string, paramOffset?: number): string {
+    const actualOffset = paramOffset ?? 0
+
+    return `#${attributeName} >= ${this.makeAttrValueName(
+      attributeName,
+      actualOffset,
+    )}`
   }
 
   public static fromValue(
