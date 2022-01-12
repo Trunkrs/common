@@ -155,7 +155,7 @@ abstract class DynamoDataStorage<TEntity>
     entities: Partial<TEntity>[],
     batchSize = 24,
   ): Promise<void> {
-    const keyPairs = (entities as TEntity[]).map(this.getKeyPairFromModel)
+    const keyPairs = (entities as TEntity[]).map((entity) => this.getKeyPairFromModel(entity))
 
     const items: DynamoDB.DocumentClient.WriteRequests = keyPairs.map(
       (keyPair) => ({
