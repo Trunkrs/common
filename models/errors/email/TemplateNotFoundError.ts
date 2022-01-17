@@ -1,6 +1,6 @@
 import ErrorBase from '../ErrorBase'
 
-class InvalidEmailAddressesError extends ErrorBase {
+class TemplateNotFoundError extends ErrorBase {
   public constructor(identifier: string) {
     super()
 
@@ -8,4 +8,4 @@ class InvalidEmailAddressesError extends ErrorBase {
   }
 }
 
-export default InvalidEmailAddressesError
+export default TemplateNotFoundError
