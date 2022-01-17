@@ -1,14 +1,14 @@
-import { RecipientValidationConfig } from '../services/email/EmailClient/models'
-import ServiceProvider, { Lifecycle } from '../utils/service-provider'
 import { createTransport } from 'nodemailer'
 import * as Mail from 'nodemailer/lib/mailer'
 import { SES } from 'aws-sdk'
+import ServiceProvider, { Lifecycle } from '../utils/service-provider'
+import { RecipientValidationConfig } from '../services/email/EmailClient/models'
 import awsProvider from './aws'
 import {
   EmailClient,
   NodemailerEmailClient,
   SESTemplateClient,
-  SESTemplateCache
+  SESTemplateCache,
 } from '../services/email'
 import { Cache, FileCache } from '../utils/caching'
 import utilsProvider, { Serializer } from './utils'
@@ -25,16 +25,19 @@ export interface ConfigureNodemailerClientRequest {
   validateRecipientDomains?: RecipientValidationConfig
 }
 
-export const NodemailerClient = ServiceProvider.createSymbol<Mail>(
-  'NodemailerClient',
-)
+export const NodemailerClient =
+  ServiceProvider.createSymbol<Mail>('NodemailerClient')
 
 export const SesNodemailerClient = ServiceProvider.createSymbol<EmailClient>(
-  'SesNodemailerClient')
+  'SesNodemailerClient',
+)
 
-export const TemplateFileCache = ServiceProvider.createSymbol<Cache>('TemplateCache')
+export const TemplateFileCache =
+  ServiceProvider.createSymbol<Cache>('TemplateCache')
 
-export const configureNodemailerClient = (config: ConfigureNodemailerClientRequest): ServiceProvider => {
+export const configureNodemailerClient = (
+  request: ConfigureNodemailerClientRequest,
+): ServiceProvider => {
   const serviceProvider = new ServiceProvider()
 
   serviceProvider.register(NodemailerClient, Lifecycle.Singleton, () =>
@@ -51,15 +54,17 @@ export const configureNodemailerClient = (config: ConfigureNodemailerClientReque
         utilsProvider.provide(Serializer),
         7200000,
         null,
-        config.templateCacheMountPath,
+        request.templateCacheMountPath,
       ),
   )
 
-  awsProvider.register(SES, Lifecycle.Singleton,
+  awsProvider.register(
+    SES,
+    Lifecycle.Singleton,
     () =>
       new SES({
-        region: config.sesRegion,
-      })
+        region: request.sesRegion,
+      }),
   )
 
   serviceProvider.register(
@@ -75,24 +80,24 @@ export const configureNodemailerClient = (config: ConfigureNodemailerClientReque
   serviceProvider.register(
     SESTemplateClient,
     Lifecycle.Singleton,
-    () => new SESTemplateClient(serviceProvider.provide(SESTemplateCache))
+    () => new SESTemplateClient(serviceProvider.provide(SESTemplateCache)),
   )
 
   serviceProvider.register(
     SesNodemailerClient,
     Lifecycle.Singleton,
-    () => new NodemailerEmailClient({
-      mailer: serviceProvider.provide(NodemailerClient),
-      templateClient: serviceProvider.provide(SESTemplateClient),
-      stage: config.stage,
-      from: config.from,
-      requireBody: config.requireBody || true,
-      requireSubject: config.requireSubject || true,
-      sourceArn: config.sourceArn,
-      validateRecipientDomains: config.validateRecipientDomains
-    })
+    () =>
+      new NodemailerEmailClient({
+        mailer: serviceProvider.provide(NodemailerClient),
+        templateClient: serviceProvider.provide(SESTemplateClient),
+        stage: request.stage,
+        from: request.from,
+        requireBody: request.requireBody || true,
+        requireSubject: request.requireSubject || true,
+        sourceArn: request.sourceArn,
+        validateRecipientDomains: request.validateRecipientDomains,
+      }),
   )
 
   return serviceProvider
 }
-
