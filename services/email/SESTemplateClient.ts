@@ -20,6 +20,7 @@ class SESTemplateClient extends TemplateClient {
     templateValues: TValues,
   ): Promise<EmailContent> {
     const template = await this.cache.get(templateName)
+
     return this.assignTemplateValues(template, templateValues)
   }
 
@@ -36,6 +37,7 @@ class SESTemplateClient extends TemplateClient {
     return Object.keys(templateParts).reduce(
       (email: EmailContent, emailPartKey: string) => {
         const templateKey = emailPartKey as keyof Template
+
         if (!template[templateKey]) {
           return email
         }

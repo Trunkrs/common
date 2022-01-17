@@ -1,5 +1,6 @@
 import { MailOptions } from 'nodemailer/lib/ses-transport'
 import Mail from 'nodemailer/lib/mailer'
+
 import EmailClient from './EmailClient'
 import {
   EmailClientConfig,
@@ -41,7 +42,7 @@ class NodemailerEmailClient extends EmailClient<NodemailerConfig> {
       templateName,
       templateValues,
     )
-    this.validateEmailParts(email)
+    this.validateEmailContent(email)
 
     const mailOptions = this.prepareMailerOptions(to, email, attachments)
 
@@ -81,8 +82,8 @@ class NodemailerEmailClient extends EmailClient<NodemailerConfig> {
     return mailOptions
   }
 
-  private validateEmailParts(parts: EmailContent): void {
-    const { html, text, subject } = parts
+  private validateEmailContent(content: EmailContent): void {
+    const { html, text, subject } = content
     const { requireSubject, requireBody } = this.config
     const hasEmailBody = html || text
 

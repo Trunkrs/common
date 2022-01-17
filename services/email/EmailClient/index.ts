@@ -36,10 +36,9 @@ abstract class EmailClient<
       validateRecipientDomains.disableOnEnvironment &&
       validateRecipientDomains.disableOnEnvironment.includes(stage)
 
-    if (!isValidationDisabled) {
+    if (isValidationDisabled) {
       return
     }
-
     const { allowedDomains } = validateRecipientDomains
 
     const hasInvalidRecipientDomains =

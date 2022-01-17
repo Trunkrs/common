@@ -20,7 +20,6 @@ abstract class TemplateClient {
     values: TValues,
   ): string {
     const expression = /\{\{([a-zA-Z0-9\\-]+)\}\}/g
-
     return template.replace(
       expression,
       <TKey extends keyof TValues>(match: string, key: TKey) => {
