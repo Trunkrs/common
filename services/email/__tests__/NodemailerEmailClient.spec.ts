@@ -7,7 +7,6 @@ import NodemailerEmailClient, {
 } from '../NodemailerEmailClient'
 import Environment from '../../../models/enum/Environment'
 import { RecipientValidationConfig } from '../EmailClient/models'
-import InvalidEmailAddressesError from '../../../models/errors/email/InvalidEmailAddressesError'
 import EmailValidationError from '../../../models/errors/email/EmailValidationError'
 
 const createMockMailer = () => ({
@@ -104,7 +103,7 @@ describe('NodemailerEmailClient', () => {
       }
 
       await expect(async () => sut.sendTemplatedEmail(params)).rejects.toThrow(
-        InvalidEmailAddressesError,
+        EmailValidationError,
       )
     })
   })

@@ -1,5 +1,5 @@
 import { EmailClientConfig, SendTemplatedEmailRequest } from './models'
-import InvalidEmailAddressesError from '../../../models/errors/email/InvalidEmailAddressesError'
+import EmailValidationError from '../../../models/errors/email/EmailValidationError'
 
 abstract class EmailClient<
   TConfig extends EmailClientConfig = EmailClientConfig,
@@ -10,7 +10,7 @@ abstract class EmailClient<
    * Sends a templated email. Supports attachments.
    *
    * @template TValues
-   * @throws { InvalidEmailAddressesError } When the send email request contains a recipient
+   * @throws { EmailValidationError } When the send email request contains a recipient
    * email address whose domain has not been whitelisted.
    */
   public async sendTemplatedEmail<TValues>(
@@ -45,7 +45,7 @@ abstract class EmailClient<
       allowedDomains && this.areRecipientDomainsInvalid(to, allowedDomains)
 
     if (hasInvalidRecipientDomains) {
-      throw new InvalidEmailAddressesError(allowedDomains)
+      throw new EmailValidationError()
     }
   }
 

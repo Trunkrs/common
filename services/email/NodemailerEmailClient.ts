@@ -91,11 +91,7 @@ class NodemailerEmailClient extends EmailClient<NodemailerConfig> {
     const noSubjectErrorCondition = !subject && requireSubject
 
     if (noEmailBodyErrorCondition || noSubjectErrorCondition) {
-      const requiredParts = []
-      if (requireBody) requiredParts.push('html/text')
-      if (requireSubject) requiredParts.push('subject')
-
-      throw new EmailValidationError(requiredParts)
+      throw new EmailValidationError()
     }
   }
 }
