@@ -7,8 +7,8 @@ import {
   SendTemplatedEmailRequest,
 } from './EmailClient/models'
 import { Attachment, EmailContent } from '../../models/email'
-import { NoEmailBodyError, NoSubjectError } from '../../models/errors/email'
 import SESTemplateClient from './SESTemplateClient'
+import EmailValidationError from '../../models/errors/email/EmailValidationError'
 
 export interface NodemailerConfig extends EmailClientConfig {
   mailer: Mail
@@ -27,7 +27,7 @@ class NodemailerEmailClient extends EmailClient<NodemailerConfig> {
   /**
    * Send an email via the Nodemailer SES email transport.
    * @protected
-   * @throws { NoEmailBodyError } When the client is configured to require an html or text part in the email
+   * @throws { EmailValidationError } When the client is configured to require an html or text part in the email
    * and the request does not contain neither parts.
    * @throws { NoEmailSubjectError } When the client is configured to require a subject and
    * the request does not contain one.
@@ -85,16 +85,17 @@ class NodemailerEmailClient extends EmailClient<NodemailerConfig> {
   private validateEmailContent(content: EmailContent): void {
     const { html, text, subject } = content
     const { requireSubject, requireBody } = this.config
+
     const hasEmailBody = html || text
-
     const noEmailBodyErrorCondition = !hasEmailBody && requireBody
-    if (noEmailBodyErrorCondition) {
-      throw new NoEmailBodyError()
-    }
-
     const noSubjectErrorCondition = !subject && requireSubject
-    if (noSubjectErrorCondition) {
-      throw new NoSubjectError()
+
+    if (noEmailBodyErrorCondition || noSubjectErrorCondition) {
+      const requiredParts = []
+      if (requireBody) requiredParts.push('html/text')
+      if (requireSubject) requiredParts.push('subject')
+
+      throw new EmailValidationError(requiredParts)
     }
   }
 }

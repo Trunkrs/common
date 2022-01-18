@@ -8,13 +8,12 @@ import {
   EmailClient,
   NodemailerEmailClient,
   SESTemplateClient,
-  SESTemplateCache,
 } from '../services/email'
 import { Cache, FileCache } from '../utils/caching'
 import utilsProvider, { Serializer } from './utils'
 import Environment from '../models/enum/Environment'
 
-export interface ConfigureNodemailerClientRequest {
+export interface ConfigureEmailClientsRequest {
   from: string
   templateCacheMountPath: string
   sesRegion: string
@@ -35,8 +34,8 @@ export const SesNodemailerClient = ServiceProvider.createSymbol<EmailClient>(
 export const TemplateFileCache =
   ServiceProvider.createSymbol<Cache>('TemplateCache')
 
-export const configureNodemailerClient = (
-  request: ConfigureNodemailerClientRequest,
+export const configureEmailClients = (
+  request: ConfigureEmailClientsRequest,
 ): ServiceProvider => {
   const serviceProvider = new ServiceProvider()
 
@@ -68,19 +67,13 @@ export const configureNodemailerClient = (
   )
 
   serviceProvider.register(
-    SESTemplateCache,
+    SESTemplateClient,
     Lifecycle.Singleton,
     () =>
-      new SESTemplateCache(
+      new SESTemplateClient(
         awsProvider.provide(SES),
         serviceProvider.provide(TemplateFileCache),
       ),
-  )
-
-  serviceProvider.register(
-    SESTemplateClient,
-    Lifecycle.Singleton,
-    () => new SESTemplateClient(serviceProvider.provide(SESTemplateCache)),
   )
 
   serviceProvider.register(

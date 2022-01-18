@@ -1,11 +1,13 @@
 import Template from '../../models/email/Template'
 import EmailContent from '../../models/email/EmailContent'
 
-import SESTemplateCache from './SESTemplateCache'
 import TemplateClient from './TemplateClient'
+import {SES} from 'aws-sdk'
+import {Cache} from '../../utils/caching'
+import TemplateNotFoundError from '../../models/errors/email/TemplateNotFoundError'
 
 class SESTemplateClient extends TemplateClient {
-  constructor(private readonly cache: SESTemplateCache) {
+  constructor(private readonly sesClient: SES, private readonly cache: Cache) {
     super()
   }
 
@@ -19,9 +21,22 @@ class SESTemplateClient extends TemplateClient {
     templateName: string,
     templateValues: TValues,
   ): Promise<EmailContent> {
-    const template = await this.cache.get(templateName)
+    const template = await this.getTemplate(templateName)
 
     return this.assignTemplateValues(template, templateValues)
+  }
+
+  /**
+   * Retrieves a template from the cache. If the cache does not have the template, attempts to retrieve
+   * the template from SES and stores it in the cache.
+   * @param { string } templateName - The template to fetch
+   * @returns { Promise<Template> } The promise object containing the specified template.
+   * @throws { TemplateNotFoundError } - For when a template could not be found.
+   */
+  public async getTemplate(templateName: string): Promise<Template> {
+    const template = await this.cache.get<Template>(templateName)
+
+    return template || this.moveSesTemplateToCache(templateName)
   }
 
   private assignTemplateValues<TValues>(
@@ -54,6 +69,34 @@ class SESTemplateClient extends TemplateClient {
       },
       {} as EmailContent,
     )
+  }
+
+  private async moveSesTemplateToCache(
+    templateName: string,
+  ): Promise<Template> {
+    const { Template: sesTemplate } = await this.sesClient
+      .getTemplate({ TemplateName: templateName })
+      .promise()
+
+    if (!sesTemplate) {
+      throw new TemplateNotFoundError(templateName)
+    }
+
+    const template = SESTemplateClient.sesTemplateToTemplate(sesTemplate)
+
+    const { name } = template
+    await this.cache.add<Template>(name, template)
+
+    return template
+  }
+
+  private static sesTemplateToTemplate(sesTemplate: SES.Template): Template {
+    return {
+      name: sesTemplate.TemplateName,
+      subject: sesTemplate.SubjectPart,
+      text: sesTemplate.TextPart,
+      html: sesTemplate.HtmlPart,
+    }
   }
 }
 
