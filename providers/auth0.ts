@@ -54,7 +54,7 @@ export const configureAuth0Service = (
         serviceProvider.provide(Auth0MachineTokenClient),
         utilsProvider.provide(HttpClient),
         serviceProvider.provide(DailyTokenCache),
-        tokenCacheStoreName,
+        appClientSecretName,
         baseUrl,
       ),
   )
