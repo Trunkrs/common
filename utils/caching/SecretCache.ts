@@ -14,7 +14,7 @@ class SecretCache extends GlobalAtomicCache {
     mountPath: string,
     protected readonly stalenessTimeout: number,
     logger: Logger,
-    private cacheDomain = 'cache'
+    private cacheDomain = 'cache',
   ) {
     super(stalenessTimeout, storeName, mountPath, logger)
   }
@@ -31,6 +31,8 @@ class SecretCache extends GlobalAtomicCache {
       },
     ]
 
+    this.logger.info('[SecretCache] - Saving SSM Parameter', key, value)
+
     await this.ssmClient
       .putParameter({
         Name: this.getFullParameterName(key),
@@ -40,6 +42,8 @@ class SecretCache extends GlobalAtomicCache {
         Tier: 'Advanced',
       })
       .promise()
+
+    this.logger.info('SSM parameter saved!')
   }
 
   public async get<TValue>(key: string): Promise<TValue | null> {

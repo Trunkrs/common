@@ -23,6 +23,13 @@ abstract class GlobalAtomicCache extends Cache {
   }
 
   private getLockFilePath(key: string): string {
+    const lockfilePath = path.join(
+      this.mountPath,
+      `portal-${this.storeName}-${key}.lck`,
+    )
+    this.logger.info('[GlobalAtomicCache] - Getting lockfile path', {
+      lockfilePath,
+    })
     return path.join(this.mountPath, `portal-${this.storeName}-${key}.lck`)
   }
 
@@ -65,11 +72,13 @@ abstract class GlobalAtomicCache extends Cache {
     const watcher = watch(this.getLockFilePath(key))
 
     const watchPromise = new Promise((resolve) => {
+      this.logger.info('[GlobalAtomicCache] - Deleting lockfile', { key })
       watcher.on('change', async () => {
         const isLockFilePresent = await this.isLockFilePresent(key)
 
         if (!isLockFilePresent) {
           resolve(true)
+          this.logger.info('[GlobalAtomicCache] - Lockfile deleted', { key })
         }
       })
     })
@@ -91,6 +100,9 @@ abstract class GlobalAtomicCache extends Cache {
     factory: () => Promise<TValue>,
   ): Promise<TValue> {
     const isLockFilePresent = await this.isLockFilePresent(key)
+    this.logger.info('[GlobalAtomicCache] - Checking file existence', {
+      isLockFilePresent,
+    })
     if (isLockFilePresent) {
       await this.waitOrDeleteLock(key)
       return this.getOrAdd(key, factory)
@@ -118,6 +130,10 @@ abstract class GlobalAtomicCache extends Cache {
     factory: () => Promise<TValue>,
   ): Promise<TValue> {
     const fetcher = this.fetchers.get(key)
+    this.logger.info('[GlobalAtomicCache] - Getting or adding cached value', {
+      fetchers: this.fetchers,
+      key,
+    })
     if (fetcher) {
       return fetcher as Promise<TValue>
     }
