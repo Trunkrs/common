@@ -5,11 +5,12 @@ import {
   MachineTokenClient,
   OAuthClient,
 } from '../services/client'
-import utilsProvider, { HttpClient, Serializer } from './utils'
+import utilsProvider, { HttpClient, Logger, Serializer } from './utils'
 
 import { configureDailyTokenCache, DailyTokenCache } from './caching'
 import awsProvider from './aws'
 import { SecretsClient } from '../services/aws'
+import { ConsoleLogger } from '../utils/logging'
 
 export const Auth0MachineClient =
   ServiceProvider.createSymbol<MachineClient>('Auth0MachineClient')
@@ -44,6 +45,12 @@ export const configureAuth0Service = (
         utilsProvider.provide(OAuthClient),
         utilsProvider.provide(Serializer),
       ),
+  )
+
+  serviceProvider.register(
+    Logger,
+    Lifecycle.Singleton,
+    () => new ConsoleLogger(),
   )
 
   serviceProvider.register(
