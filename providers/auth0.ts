@@ -5,7 +5,7 @@ import {
   MachineTokenClient,
   OAuthClient,
 } from '../services/client'
-import utilsProvider, { HttpClient, Serializer } from './utils'
+import utilsProvider, { HttpClient, Logger, Serializer } from './utils'
 
 import { configureDailyTokenCache, DailyTokenCache } from './caching'
 import awsProvider from './aws'
@@ -45,6 +45,8 @@ export const configureAuth0Service = (
         utilsProvider.provide(Serializer),
       ),
   )
+
+  utilsProvider.provide(Logger)
 
   serviceProvider.register(
     Auth0MachineClient,
