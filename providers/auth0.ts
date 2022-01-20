@@ -47,11 +47,7 @@ export const configureAuth0Service = (
       ),
   )
 
-  serviceProvider.register(
-    Logger,
-    Lifecycle.Singleton,
-    () => new ConsoleLogger(),
-  )
+  utilsProvider.provide(Logger)
 
   serviceProvider.register(
     Auth0MachineClient,
