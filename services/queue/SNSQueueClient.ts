@@ -1,4 +1,5 @@
 import { SNS } from 'aws-sdk'
+import { v1 as uuidV1 } from 'uuid'
 
 import Serializer from '../../utils/serialization/Serializer'
 
@@ -23,6 +24,24 @@ class SNSQueueClient implements QueueClient {
     }
   }
 
+  private static translateAttributesToSNSAttributes(attributes: {
+    [key: string]: string | number | boolean
+  }): { [key: string]: SNS.MessageAttributeValue } {
+    // Turn optional message attributes into SNS equivalents
+    return Object.keys(attributes).reduce(
+      (keyMap, attrKey) =>
+        Object.assign(keyMap, {
+          [attrKey]: {
+            DataType: SNSQueueClient.translateJStypeToSNSType(
+              typeof attributes[attrKey],
+            ),
+            StringValue: String(attributes[attrKey]),
+          },
+        }),
+      {} as { [key: string]: SNS.Types.MessageAttributeValue },
+    )
+  }
+
   private readonly client = new SNS()
 
   constructor(
@@ -39,19 +58,9 @@ class SNSQueueClient implements QueueClient {
   public async sendMessage<TMessage>(
     request: QueueMessageRequest<TMessage, SNSMessageOptions>,
   ): Promise<void> {
-    // Turn optional message attributes into SNS equivalents
     const attributes = request.options?.attributes
-      ? Object.keys(request.options?.attributes).reduce(
-          (keyMap, attrKey) =>
-            Object.assign(keyMap, {
-              [attrKey]: {
-                DataType: SNSQueueClient.translateJStypeToSNSType(
-                  typeof request.options?.attributes?.[attrKey],
-                ),
-                StringValue: String(request.options?.attributes?.[attrKey]),
-              },
-            }),
-          {} as { [key: string]: SNS.Types.MessageAttributeValue },
+      ? SNSQueueClient.translateAttributesToSNSAttributes(
+          request.options?.attributes,
         )
       : {}
 
@@ -67,13 +76,28 @@ class SNSQueueClient implements QueueClient {
   }
 
   public async sendBatchMessage<TMessage>(
-    request: QueueBatchMessageRequest<TMessage>,
+    request: QueueBatchMessageRequest<TMessage, SNSMessageOptions>,
   ): Promise<void> {
-    const batchSendMessagePromises = request.messages.map((message) =>
-      this.sendMessage({ message, options: request.options }),
-    )
+    const attributes = request.options?.attributes
+      ? SNSQueueClient.translateAttributesToSNSAttributes(
+          request.options?.attributes,
+        )
+      : {}
 
-    await Promise.all(batchSendMessagePromises)
+    const batchSendMessageEntries = request.messages.map((message) => ({
+      Id: uuidV1(),
+      Message: this.serializer.serialize(message, 'string'),
+      MessageGroupId: request.options?.messageGroupId,
+      MessageDeduplicationId: request.options?.messageGroupId,
+      MessageAttributes: attributes,
+    }))
+
+    await this.client
+      .publishBatch({
+        TopicArn: this.topicArn,
+        PublishBatchRequestEntries: batchSendMessageEntries,
+      })
+      .promise()
   }
 }
 

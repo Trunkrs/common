@@ -606,11 +606,6 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@types/aws-lambda@^8.10.83":
-  version "8.10.83"
-  resolved "https://registry.yarnpkg.com/@types/aws-lambda/-/aws-lambda-8.10.83.tgz#66db06cedb7476e860e8655e4387fd2e4385433a"
-  integrity sha512-7YsLv/B8rF7K7jYAGmYBxLq3QU+hQV7qNJBMcSCmJCTcXuzoTKGBX8d4v9CsVs0SOKBSAErXG7rtk8jVxiP30g==
-
 "@types/babel__core@^7.0.0", "@types/babel__core@^7.1.14":
   version "7.1.16"
   resolved "https://registry.yarnpkg.com/@types/babel__core/-/babel__core-7.1.16.tgz#bc12c74b7d65e82d29876b5d0baf5c625ac58702"
@@ -1074,7 +1069,7 @@ aws-lambda@^1.0.6:
     js-yaml "^3.13.1"
     watchpack "^2.0.0-beta.10"
 
-aws-sdk@*, aws-sdk@^2.952.0:
+aws-sdk@*:
   version "2.1000.0"
   resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.1000.0.tgz#408e02dd299541b9e35c85244df9df51cbb2f76a"
   integrity sha512-PhL4WPIJ5fyOBbmWdEaskD6+qvu9VD4kVLEBK/SchcZXmivUKhED3POR6dbfskhwTksxwkrwa6G4NNI3yY7d1g==
@@ -1083,6 +1078,21 @@ aws-sdk@*, aws-sdk@^2.952.0:
     events "1.1.1"
     ieee754 "1.1.13"
     jmespath "0.15.0"
+    querystring "0.2.0"
+    sax "1.2.1"
+    url "0.10.3"
+    uuid "3.3.2"
+    xml2js "0.4.19"
+
+aws-sdk@^2.1067.0:
+  version "2.1067.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.1067.0.tgz#2e7f5a2d765fcf77a45f25fdd1f12a64942628a7"
+  integrity sha512-3Ys1k4cNQy4z37IpPjQ9c5ldkXMeZGbWoarKHynPPY3WCEj+Nw2u6zk484fA9/lTHNN3YesLuZ0OmEzGgjFEOw==
+  dependencies:
+    buffer "4.9.2"
+    events "1.1.1"
+    ieee754 "1.1.13"
+    jmespath "0.16.0"
     querystring "0.2.0"
     sax "1.2.1"
     url "0.10.3"
@@ -2937,6 +2947,11 @@ jmespath@0.15.0:
   version "0.15.0"
   resolved "https://registry.yarnpkg.com/jmespath/-/jmespath-0.15.0.tgz#a3f222a9aae9f966f5d27c796510e28091764217"
   integrity sha1-o/Iiqarp+Wb10nx5ZRDigJF2Qhc=
+
+jmespath@0.16.0:
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/jmespath/-/jmespath-0.16.0.tgz#b15b0a85dfd4d930d43e69ed605943c802785076"
+  integrity sha512-9FzQjJ7MATs1tSpnco1K6ayiYE3figslrXA72G2HQ/n76RzvYlofyi5QM+iX4YRs/pu3yzxlVQSST23+dMDknw==
 
 joi@*, joi@^17.4.2:
   version "17.4.2"
