@@ -6,6 +6,7 @@ export interface SQSMessageOptions {
 export interface SNSMessageOptions {
   deduplicationId?: string
   messageGroupId?: string
+  messageDeduplicationId?: string
   attributes?: { [key: string]: string | number | boolean }
 }
 

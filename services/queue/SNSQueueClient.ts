@@ -69,7 +69,7 @@ class SNSQueueClient implements QueueClient {
         TopicArn: this.topicArn,
         Message: this.serializer.serialize(request.message, 'string'),
         MessageGroupId: request.options?.messageGroupId,
-        MessageDeduplicationId: request.options?.messageGroupId,
+        MessageDeduplicationId: request.options?.messageDeduplicationId,
         MessageAttributes: attributes,
       })
       .promise()
@@ -88,7 +88,7 @@ class SNSQueueClient implements QueueClient {
       Id: uuidV1(),
       Message: this.serializer.serialize(message, 'string'),
       MessageGroupId: request.options?.messageGroupId,
-      MessageDeduplicationId: request.options?.messageGroupId,
+      MessageDeduplicationId: request.options?.messageDeduplicationId,
       MessageAttributes: attributes,
     }))
 
