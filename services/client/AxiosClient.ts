@@ -35,6 +35,7 @@ class AxiosClient implements HttpClient {
         params: request.params,
         headers: request.headers,
         timeout: request.timeout ?? defaultTimeout,
+        responseType: request.responseType ?? 'json',
       })
 
       return response.data
@@ -54,6 +55,7 @@ class AxiosClient implements HttpClient {
           auth: request.authentication,
           headers: request.headers,
           timeout: request.timeout ?? defaultTimeout,
+          responseType: request.responseType ?? 'json',
         },
       )
 
@@ -74,6 +76,7 @@ class AxiosClient implements HttpClient {
           auth: request.authentication,
           headers: request.headers,
           timeout: request.timeout ?? defaultTimeout,
+          responseType: request.responseType ?? 'json',
         },
       )
 
@@ -92,6 +95,7 @@ class AxiosClient implements HttpClient {
         params: request.params,
         headers: request.headers,
         timeout: request.timeout ?? defaultTimeout,
+        responseType: request.responseType ?? 'json',
       })
     } catch (error) {
       throw AxiosClient.createError(error, request)
