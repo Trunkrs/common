@@ -85,6 +85,8 @@ class SNSQueueClient implements QueueClient {
       )
 
       await Promise.all(batchSendMessagePromises)
+
+      return
     }
 
     const attributes = request.options?.attributes
