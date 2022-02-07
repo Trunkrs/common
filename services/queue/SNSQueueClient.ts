@@ -42,7 +42,7 @@ class SNSQueueClient implements QueueClient {
     )
   }
 
-  private readonly client = new SNS({ apiVersion: '' })
+  private readonly client = new SNS()
 
   constructor(
     /**
