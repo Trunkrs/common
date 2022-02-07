@@ -42,7 +42,7 @@ class SNSQueueClient implements QueueClient {
     )
   }
 
-  private readonly client = new SNS()
+  private readonly client = new SNS({ apiVersion: '' })
 
   constructor(
     /**
@@ -78,6 +78,15 @@ class SNSQueueClient implements QueueClient {
   public async sendBatchMessage<TMessage>(
     request: QueueBatchMessageRequest<TMessage, SNSMessageOptions>,
   ): Promise<void> {
+    const isPublishBatchSupported = this.client.publishBatch
+    if (!isPublishBatchSupported) {
+      const batchSendMessagePromises = request.messages.map((message) =>
+        this.sendMessage({ message, options: request.options }),
+      )
+
+      await Promise.all(batchSendMessagePromises)
+    }
+
     const attributes = request.options?.attributes
       ? SNSQueueClient.translateAttributesToSNSAttributes(
           request.options?.attributes,
