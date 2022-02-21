@@ -1,6 +1,5 @@
 import StartStateMachineRequest from './StartStateMachineRequest'
 
-
 interface StateMachineClient {
   /**
    * Start a state machine execution.
