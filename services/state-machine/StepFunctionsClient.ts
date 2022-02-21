@@ -1,12 +1,11 @@
-import { StepFunctions } from 'aws-sdk'
+import { SecretsManager, StepFunctions } from 'aws-sdk'
 import StateMachineClient from './StateMachineClient'
 import StartStateMachineRequest from './StateMachineClient/StartStateMachineRequest'
 
 class StepFunctionsClient implements StateMachineClient {
-  public constructor(
-    private readonly client: StepFunctions,
-    private readonly stateMachineArn: string,
-  ) {}
+  private readonly client = new StepFunctions()
+
+  public constructor(private readonly stateMachineArn: string) {}
 
   public async startStateMachine<
     TRequest extends StartStateMachineRequest<TInput>,

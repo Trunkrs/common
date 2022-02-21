@@ -1,4 +1,4 @@
-import { SES } from 'aws-sdk'
+import { StepFunctions } from 'aws-sdk'
 import ServiceProvider, { Lifecycle } from '../utils/service-provider'
 
 import SecretsClient from '../services/aws/SecretsClient'
