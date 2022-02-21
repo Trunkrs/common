@@ -2,7 +2,7 @@ interface StateMachineClient {
   /**
    * Start a state machine execution.
    * @param { TInput } [input] - the optional input to pass to the starting state.
-   * @template TInput, TRequest
+   * @template TInput
    */
   startStateMachine<TInput = unknown>(input?: TInput): Promise<void>
 }
