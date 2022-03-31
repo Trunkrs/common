@@ -15,6 +15,10 @@ awsProvider.register(
   () => new SecretsClient(utilsProvider.provide(MemoryCache)),
 )
 
-awsProvider.register(SecretsClientWithoutCache, Lifecycle.Singleton)
+awsProvider.register(
+  SecretsClientWithoutCache,
+  Lifecycle.Singleton,
+  () => new SecretsClient(),
+)
 
 export default awsProvider
