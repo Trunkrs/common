@@ -5,21 +5,27 @@ import Cache from '../../utils/caching/Cache'
 class SecretsClient {
   private readonly secretsManager = new SecretsManager()
 
-  public constructor(private readonly cache: Cache) {}
+  public constructor(private readonly cache?: Cache) {}
 
   public async getSecretValue(secretName: string): Promise<string | undefined> {
-    const secretValue = await this.cache.getOrAdd<string | undefined>(
-      secretName,
-      async () => {
-        const secret = await this.secretsManager
-          .getSecretValue({ SecretId: secretName })
-          .promise()
+    const getSecret = async () => {
+      const secret = await this.secretsManager
+        .getSecretValue({ SecretId: secretName })
+        .promise()
 
-        return secret.SecretString
-      },
-    )
+      return secret.SecretString
+    }
 
-    return secretValue
+    if (this.cache) {
+      const secretValue = await this.cache.getOrAdd<string | undefined>(
+        secretName,
+        getSecret,
+      )
+
+      return secretValue
+    }
+
+    return getSecret()
   }
 
   public async updateSecretValue(
@@ -33,12 +39,14 @@ class SecretsClient {
       })
       .promise()
 
-    const isCacheNotEmpty = await this.cache.hasKey(secretName)
-    if (isCacheNotEmpty) {
-      await this.cache.remove(secretName)
-    }
+    if (this.cache) {
+      const isCacheNotEmpty = await this.cache.hasKey(secretName)
+      if (isCacheNotEmpty) {
+        await this.cache.remove(secretName)
+      }
 
-    await this.cache.add(secretName, secretValue)
+      await this.cache.add(secretName, secretValue)
+    }
   }
 }
 
