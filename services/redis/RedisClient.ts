@@ -66,8 +66,6 @@ class RedisClient {
     factory: () => Promise<string>,
     setOptions?: SetOptions,
   ): Promise<string> {
-    await this.client.connect()
-
     let value = await this.get(key)
 
     if (!value) {
@@ -75,8 +73,6 @@ class RedisClient {
 
       await this.set(key, value, setOptions)
     }
-
-    await this.client.disconnect()
 
     return value
   }
