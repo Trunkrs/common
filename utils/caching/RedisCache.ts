@@ -29,8 +29,8 @@ class RedisCache extends Cache {
       return null
     }
 
-    const deSerializedItem: CacheItem = this.serializer.deserialize(item)
-    return deSerializedItem.value as TValue
+    const deserializedItem: CacheItem = this.serializer.deserialize(item)
+    return deserializedItem.value as TValue
   }
 
   public async getOrAdd<TValue>(
@@ -46,8 +46,8 @@ class RedisCache extends Cache {
       return newValue
     }
 
-    const deSerializedItem: CacheItem = this.serializer.deserialize(item)
-    return deSerializedItem.value as TValue
+    const deserializedItem: CacheItem = this.serializer.deserialize(item)
+    return deserializedItem.value as TValue
   }
 
   public async hasKey(key: string): Promise<boolean> {
