@@ -6,11 +6,11 @@ class RedisClient {
   private needsConnectionCounter = 0
 
   private async connect() {
-    if (!this.needsConnectionCounter) {
+    this.needsConnectionCounter += 1
+
+    if (this.needsConnectionCounter === 1) {
       await this.client.connect()
     }
-
-    this.needsConnectionCounter += 1
   }
 
   private async disconnect() {
@@ -35,25 +35,27 @@ class RedisClient {
     value: string,
     options?: SetOptions,
   ): Promise<void> {
-    await this.connect()
+    try {
+      await this.connect()
+      const commandOptions = {}
 
-    const commandOptions = {}
+      if (options?.expiresAt) {
+        Object.assign(commandOptions, {
+          // sets expiration at a unix time in milliseconds
+          PXAT: options.expiresAt.getTime(),
+        })
+      }
 
-    if (options?.expiresAt) {
-      Object.assign(commandOptions, {
-        // sets expiration at a unix time in milliseconds
-        PXAT: options.expiresAt.getTime(),
-      })
+      if (options?.setCondition) {
+        Object.assign(commandOptions, {
+          [options.setCondition]: true,
+        })
+      }
+
+      await this.client.set(key, value, commandOptions)
+    } finally {
+      await this.disconnect()
     }
-
-    if (options?.setCondition) {
-      Object.assign(commandOptions, {
-        [options.setCondition]: true,
-      })
-    }
-
-    await this.client.set(key, value, commandOptions)
-    await this.disconnect()
   }
 
   /**
@@ -63,13 +65,14 @@ class RedisClient {
    * @returns {string | null}
    */
   public async get(key: string): Promise<string | null> {
-    await this.connect()
+    try {
+      await this.connect()
 
-    const item = await this.client.get(key)
-
-    await this.disconnect()
-
-    return item
+      const item = await this.client.get(key)
+      return item
+    } finally {
+      await this.disconnect()
+    }
   }
 
   /**
@@ -103,9 +106,12 @@ class RedisClient {
    * @returns {void}
    */
   public async delete(...keys: string[]): Promise<void> {
-    await this.connect()
-    await this.client.del(keys)
-    await this.disconnect()
+    try {
+      await this.connect()
+      await this.client.del(keys)
+    } finally {
+      await this.disconnect()
+    }
   }
 
   /**
@@ -113,9 +119,12 @@ class RedisClient {
    * @returns {void}
    */
   public async clear(): Promise<void> {
-    await this.connect()
-    await this.client.FLUSHALL()
-    await this.disconnect()
+    try {
+      await this.connect()
+      await this.client.FLUSHALL()
+    } finally {
+      await this.disconnect()
+    }
   }
 }
 
