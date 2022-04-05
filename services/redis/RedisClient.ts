@@ -3,7 +3,25 @@ import { RedisClientType } from 'redis'
 import SetOptions from './types/SetOptions'
 
 class RedisClient {
-  constructor(private readonly client: RedisClientType) {}
+  private needsConnectionCounter = 0
+
+  private async connect() {
+    if (!this.needsConnectionCounter) {
+      await this.client.connect()
+    }
+
+    this.needsConnectionCounter += 1
+  }
+
+  private async disconnect() {
+    this.needsConnectionCounter -= 1
+
+    if (!this.needsConnectionCounter) {
+      await this.client.disconnect()
+    }
+  }
+
+  public constructor(private readonly client: RedisClientType) {}
 
   /**
    * Sets a string at key, to be of value in the Redis Data Store
@@ -17,6 +35,8 @@ class RedisClient {
     value: string,
     options?: SetOptions,
   ): Promise<void> {
+    await this.connect()
+
     const commandOptions = {}
 
     if (options?.expiresAt) {
@@ -32,9 +52,8 @@ class RedisClient {
       })
     }
 
-    await this.client.connect()
     await this.client.set(key, value, commandOptions)
-    await this.client.disconnect()
+    await this.disconnect()
   }
 
   /**
@@ -44,10 +63,11 @@ class RedisClient {
    * @returns {string | null}
    */
   public async get(key: string): Promise<string | null> {
-    await this.client.connect()
+    await this.connect()
+
     const item = await this.client.get(key)
 
-    await this.client.disconnect()
+    await this.disconnect()
 
     return item
   }
@@ -83,9 +103,9 @@ class RedisClient {
    * @returns {void}
    */
   public async delete(...keys: string[]): Promise<void> {
-    await this.client.connect()
+    await this.connect()
     await this.client.del(keys)
-    await this.client.disconnect()
+    await this.disconnect()
   }
 
   /**
@@ -93,9 +113,9 @@ class RedisClient {
    * @returns {void}
    */
   public async clear(): Promise<void> {
-    await this.client.connect()
+    await this.connect()
     await this.client.FLUSHALL()
-    await this.client.disconnect()
+    await this.disconnect()
   }
 }
 
