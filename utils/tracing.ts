@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires,global-require */
-import XRay, { Segment, Subsegment } from 'aws-xray-sdk'
+import XRay, { Subsegment, SegmentLike } from 'aws-xray-sdk'
 import { MiddlewareLayer } from './handlers/HttpHandlerBuilder/types'
 
 class SegmentStack {
-  private readonly stack: Array<Segment | Subsegment> = []
+  private readonly stack: Array<SegmentLike> = []
 
-  public get current(): Segment | Subsegment | undefined {
+  public get current(): SegmentLike | undefined {
     if (!this.stack.length) {
       return XRay.getSegment()
     }
@@ -25,8 +25,13 @@ class SegmentStack {
     }
   }
 
-  public addSegment(segment: Segment | Subsegment): void {
-    this.stack.push(segment)
+  public addSegment(name: string, parent?: SegmentLike): Subsegment {
+    const subSeg = (parent ?? (this.current as SegmentLike))?.addNewSubsegment(
+      name,
+    )
+    this.stack.push(subSeg)
+
+    return subSeg
   }
 
   public closeSegment(error?: unknown): void {
@@ -37,34 +42,28 @@ class SegmentStack {
   public tracePromise<TResult>(
     name: string,
     promise: Promise<TResult>,
-    parent?: Segment | Subsegment,
+    parent?: SegmentLike,
   ): Promise<TResult> {
-    return XRay.captureAsyncFunc(
-      name,
-      (segment) => {
-        if (segment) this.addSegment(segment)
+    this.addSegment(name, parent)
 
-        return promise
-          .then((result) => {
-            this.closeSegment()
-            return result
-          })
-          .catch((error) => {
-            this.closeSegment(error)
-            throw error
-          })
-      },
-      parent ?? this.current,
-    )
+    return promise
+      .then((result) => {
+        this.closeSegment()
+        return result
+      })
+      .catch((error) => {
+        this.closeSegment(error)
+        throw error
+      })
   }
 
   public traceAsyncFunction<TArgs extends any[], TResult = never>(
     methodName: string,
     fn: (...args: TArgs) => Promise<TResult>,
-    parent?: Segment | Subsegment,
+    parent?: SegmentLike,
   ): (...args: TArgs) => Promise<TResult> {
     return (...args: TArgs) => {
-      return this.tracePromise(methodName, fn(...args), parent ?? this.current)
+      return this.tracePromise(methodName, fn(...args), parent)
     }
   }
 
