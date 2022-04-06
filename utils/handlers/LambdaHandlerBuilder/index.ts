@@ -3,7 +3,7 @@ import {
   NoProviderError,
 } from '../../../models/errors/handlers'
 import ServiceProvider, { Constructor } from '../../service-provider'
-import Tracing from '../../../ops/tracing'
+import Tracing from '../../tracing'
 
 import ControllerFactory from '../../controllers/ControllerFactory'
 

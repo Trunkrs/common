@@ -14,7 +14,7 @@
     "models",
     "config",
     "controllers",
-    "ops/tracing.ts"
+    "utils/tracing.ts"
   ],
   "exclude": [
     "node_modules"

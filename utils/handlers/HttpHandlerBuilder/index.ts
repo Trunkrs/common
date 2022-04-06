@@ -11,7 +11,7 @@ import { Serializer } from '../../serialization'
 import HttpControllerFactory, {
   ActionExecutionInput,
 } from '../../controllers/HttpControllerFactory'
-import Tracing from '../../../ops/tracing'
+import Tracing from '../../tracing'
 
 import {
   HTTPLambdaHandler,

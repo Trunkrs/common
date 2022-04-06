@@ -3,7 +3,7 @@ import {
   NoProviderError,
 } from '../../../models/errors/handlers'
 
-import Tracing from '../../../ops/tracing'
+import Tracing from '../../tracing'
 
 import SNSExtractor from './extractors/SNSExtractor'
 import SQSExtractor from './extractors/SQSExtractor'

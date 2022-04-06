@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,global-require */
 import XRay, { Segment, Subsegment } from 'aws-xray-sdk'
-import { MiddlewareLayer } from '../utils/handlers/HttpHandlerBuilder/types'
+import { MiddlewareLayer } from './handlers/HttpHandlerBuilder/types'
 
 class SegmentStack {
   private readonly stack: Array<Segment | Subsegment> = []
