@@ -4,7 +4,7 @@ interface QueryParameters<TEntity> {
   queryOptions?: {
     operation?: 'Scan' | 'Query'
   }
-  where: WhereParameters<TEntity>
+  where?: WhereParameters<TEntity>
   select?: Array<keyof TEntity>
   limit?: number
   orderDescending?: boolean

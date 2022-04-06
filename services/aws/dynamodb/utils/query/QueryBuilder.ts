@@ -6,6 +6,7 @@ import WhereParameters from './QueryWhereStatement'
 import QueryParameters from './QueryParameters'
 
 import { OperationNotSupportedError } from '../../../../../models/errors'
+import WhereClauseNotProvidedError from '../../errors/WhereClauseNotProvidedError'
 
 interface SplitConditionalKeys<TEntity> {
   keyCondition: WhereParameters<TEntity>
@@ -131,14 +132,18 @@ class QueryBuilder {
       TableName: tableName,
       IndexName: indexName,
       Limit: limit,
-      ProjectionExpression: select
-        ? QueryBuilder.buildProjectionExpression(select)
-        : undefined,
-      FilterExpression: this.buildExpression(where),
-      ExpressionAttributeNames: QueryBuilder.buildAttributeNames(where) as {
+    }
+
+    if (select) {
+      op.ProjectionExpression = QueryBuilder.buildProjectionExpression(select)
+    }
+
+    if (where) {
+      op.FilterExpression = this.buildExpression(where)
+      op.ExpressionAttributeNames = QueryBuilder.buildAttributeNames(where) as {
         [key: string]: string
-      },
-      ExpressionAttributeValues: this.buildAttributeValues(where),
+      }
+      op.ExpressionAttributeValues = this.buildAttributeValues(where)
     }
 
     return op
@@ -151,25 +156,32 @@ class QueryBuilder {
     indexName,
   }: QueryBuilderParams<TEntity>): DynamoDB.DocumentClient.QueryInput {
     const { where, limit, select, orderDescending } = query
+
+    if (!where) {
+      // Where clauses must be provided on Query operations in dynamoDB
+      throw new WhereClauseNotProvidedError()
+    }
+
     const { keyCondition, filterCondition } = this.splitKeyAndFilterCondition(
       where,
       primaryKeys,
     )
 
-    const op = {
+    const op: DynamoDB.DocumentClient.QueryInput = {
       TableName: tableName,
       IndexName: indexName,
       Limit: limit,
       ScanIndexForward: !orderDescending,
-      ProjectionExpression: select
-        ? QueryBuilder.buildProjectionExpression(select)
-        : undefined,
       KeyConditionExpression: this.buildExpression(keyCondition),
       FilterExpression: this.buildExpression(filterCondition),
       ExpressionAttributeNames: QueryBuilder.buildAttributeNames(where) as {
         [key: string]: string
       },
       ExpressionAttributeValues: this.buildAttributeValues(where),
+    }
+
+    if (select) {
+      op.ProjectionExpression = QueryBuilder.buildProjectionExpression(select)
     }
 
     return op
