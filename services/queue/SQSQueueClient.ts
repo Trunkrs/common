@@ -1,4 +1,5 @@
-import { SQS } from 'aws-sdk'
+import XRay from 'aws-xray-sdk'
+import AWS from 'aws-sdk'
 
 import Serializer from '../../utils/serialization/Serializer'
 
@@ -8,6 +9,8 @@ import {
   QueueMessageRequest,
   SQSMessageOptions,
 } from './QueueClient'
+
+const { SQS } = XRay.captureAWS(AWS)
 
 class SNSQueueClient implements QueueClient {
   private readonly client = new SQS()

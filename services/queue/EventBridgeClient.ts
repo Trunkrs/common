@@ -1,4 +1,5 @@
-import { EventBridge } from 'aws-sdk'
+import XRay from 'aws-xray-sdk'
+import AWS from 'aws-sdk'
 
 import { Serializer } from '../../utils/serialization'
 
@@ -8,6 +9,8 @@ import {
   QueueBatchMessageRequest,
   QueueMessageRequest,
 } from './QueueClient'
+
+const { EventBridge } = XRay.captureAWS(AWS)
 
 class EventBridgeClient implements QueueClient {
   private readonly client = new EventBridge()

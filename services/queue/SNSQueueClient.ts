@@ -1,4 +1,5 @@
-import { SNS } from 'aws-sdk'
+import XRay from 'aws-xray-sdk'
+import AWS from 'aws-sdk'
 import { v1 as uuidV1 } from 'uuid'
 
 import Serializer from '../../utils/serialization/Serializer'
@@ -9,6 +10,8 @@ import {
   QueueMessageRequest,
   SNSMessageOptions,
 } from './QueueClient'
+
+const { SNS } = XRay.captureAWS(AWS)
 
 class SNSQueueClient implements QueueClient {
   private static translateJStypeToSNSType(typeName: string): string {
@@ -26,7 +29,7 @@ class SNSQueueClient implements QueueClient {
 
   private static translateAttributesToSNSAttributes(attributes: {
     [key: string]: string | number | boolean
-  }): { [key: string]: SNS.MessageAttributeValue } {
+  }): { [key: string]: AWS.SNS.MessageAttributeValue } {
     // Turn optional message attributes into SNS equivalents
     return Object.keys(attributes).reduce(
       (keyMap, attrKey) =>
@@ -38,7 +41,7 @@ class SNSQueueClient implements QueueClient {
             StringValue: String(attributes[attrKey]),
           },
         }),
-      {} as { [key: string]: SNS.Types.MessageAttributeValue },
+      {} as { [key: string]: AWS.SNS.Types.MessageAttributeValue },
     )
   }
 

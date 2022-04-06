@@ -11,6 +11,7 @@ import { Serializer } from '../../serialization'
 import HttpControllerFactory, {
   ActionExecutionInput,
 } from '../../controllers/HttpControllerFactory'
+import Tracing from '../../../ops/tracing'
 
 import {
   HTTPLambdaHandler,
@@ -133,6 +134,8 @@ class HttpHandlerBuilder<TContext, TInput> {
       event: AWSLambda.APIGatewayProxyEventV2,
     ): Promise<AWSLambda.APIGatewayProxyResultV2> => {
       try {
+        Tracing.prepare()
+
         const convertedEvent = await this.proxyEventToActionInput(event)
         const [method, route] = this.extractActionInfo(event)
         const result = await HttpControllerFactory.executeAction<

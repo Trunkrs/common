@@ -8,10 +8,12 @@
   "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.1067.0",
+    "aws-xray-sdk": "^3.3.4",
     "axios": "^0.21.4",
     "date-fns": "^2.25.0",
     "deepmerge": "^4.2.2",
     "joi": "^17.4.2",
+    "jsonwebtoken": "^8.5.1",
     "nodemailer": "^6.7.2",
     "qs": "^6.10.1",
     "uuid": "^8.3.2"
@@ -21,6 +23,7 @@
     "@types/faker": "^5.5.8",
     "@types/jest": "^27.0.1",
     "@types/joi": "^17.2.3",
+    "@types/jsonwebtoken": "^8.5.8",
     "@types/node": "^14.11.2",
     "@types/nodemailer": "^6.4.4",
     "@types/qs": "^6.9.7",
@@ -37,9 +40,9 @@
     "husky": "^4.3.0",
     "jest": "^27.0.5",
     "prettier": "^2.1.2",
+    "redis": "^4.0.4",
     "ts-jest": "^27.0.5",
-    "typescript": "^4.2.4",
-    "redis": "^4.0.4"
+    "typescript": "^4.2.4"
   },
   "publishConfig": {
     "access": "public"
@@ -48,18 +51,20 @@
     "peer": {
       "@typescript-eslint/eslint-plugin": ">=4 || <5",
       "@typescript-eslint/parser": ">=4 || <5",
-      "redis": "^4.0.4",
+      "redis": ">=4 || <5",
       "aws-sdk": ">2.1000.0 || <3",
       "date-fns": ">=2 || <3",
       "eslint": ">=7.2.0",
       "eslint-config-airbnb-base-typescript-prettier": ">=3.1 || <4",
       "eslint-config-airbnb-typescript-prettier": ">=4 || <5",
       "joi": ">=17 || <18",
+      "jsonwebtoken": "8",
       "uuid": "8",
       "prettier": ">=2",
       "ts-jest": ">=21"
     },
     "dep": {
+      "aws-xray-sdk": "^3.3.4",
       "axios": "^0.22.0",
       "qs": "^6.10.1",
       "deepmerge": "^4.2.2"

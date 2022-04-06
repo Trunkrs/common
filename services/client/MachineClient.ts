@@ -1,13 +1,18 @@
+import { AxiosResponse } from 'axios'
+
 import Cache from '../../utils/caching/Cache'
 
 import { HttpClient, HttpRequestParams } from './HttpClient'
 import AxiosClient from './AxiosClient'
 import MachineTokenClient from './MachineTokenClient'
+import { isExpired } from '../../utils/tokens'
 
 type ResponseType = HttpRequestParams['responseType']
 
 class MachineClient {
   protected bearerTokenInterceptorId?: number
+
+  private tokenResponseInterceptorId?: number
 
   public constructor(
     protected readonly machineTokenClient: MachineTokenClient,
@@ -95,24 +100,42 @@ class MachineClient {
   }
 
   protected async checkBearerToken(): Promise<void> {
-    const token = await this.getBearerToken()
+    let token = await this.getBearerToken()
+    if (isExpired(token)) {
+      await this.cache.remove(this.secretCacheKey)
+      token = await this.getBearerToken()
+    }
 
-    const authorizationHeader = `Bearer ${token}`
-
-    if (this.bearerTokenInterceptorId) {
+    if (this.bearerTokenInterceptorId && this.tokenResponseInterceptorId) {
       this.axiosClient.interceptors.request.eject(this.bearerTokenInterceptorId)
+      this.axiosClient.interceptors.response.eject(
+        this.tokenResponseInterceptorId,
+      )
     }
 
     this.bearerTokenInterceptorId = this.axiosClient.interceptors.request.use(
       (config) => {
         const modifiedHeaders = {
           ...config.headers,
-          Authorization: authorizationHeader,
+          Authorization: `Bearer ${token}`,
         }
 
         return Object.assign(config, { headers: modifiedHeaders })
       },
     )
+    this.tokenResponseInterceptorId =
+      this.axiosClient.interceptors.response.use(
+        async (response): Promise<AxiosResponse> => {
+          if (response.status !== 401) {
+            return response
+          }
+
+          await this.cache.remove(this.secretCacheKey)
+          await this.checkBearerToken()
+
+          return this.axiosClient.request(response.config)
+        },
+      )
   }
 }
 

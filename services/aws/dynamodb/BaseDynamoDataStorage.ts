@@ -1,11 +1,14 @@
 /* eslint-disable no-await-in-loop */
-import { DynamoDB } from 'aws-sdk'
+import XRay from 'aws-xray-sdk'
+import AWS from 'aws-sdk'
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
+
+const { DynamoDB } = XRay.captureAWS(AWS)
 
 abstract class BaseDynamoDataStorage<TEntity> {
   protected abstract readonly keys: Array<keyof TEntity>
 
-  protected readonly documentClient: DynamoDB.DocumentClient
+  protected readonly documentClient: AWS.DynamoDB.DocumentClient
 
   protected constructor(protected readonly tableName: string) {
     this.documentClient = new DynamoDB.DocumentClient()
@@ -13,7 +16,7 @@ abstract class BaseDynamoDataStorage<TEntity> {
 
   protected async executeOperation<TResultEntity = TEntity>(
     operation: 'Scan' | 'Query',
-    query: DynamoDB.DocumentClient.ScanInput,
+    query: AWS.DynamoDB.DocumentClient.ScanInput,
   ): Promise<TResultEntity[]> {
     const results = []
     let lastEvaluatedKey
