@@ -14,10 +14,12 @@ class StepFunctionsClient implements StateMachineClient {
   ): Promise<void> {
     const requestInput = input ? JSON.stringify(input) : undefined
 
-    await this.client.startExecution({
-      stateMachineArn: this.stateMachineArn,
-      input: requestInput,
-    })
+    await this.client
+      .startExecution({
+        stateMachineArn: this.stateMachineArn,
+        input: requestInput,
+      })
+      .promise()
   }
 }
 
