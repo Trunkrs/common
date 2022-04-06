@@ -134,11 +134,11 @@ class QueryBuilder {
       Limit: limit,
     }
 
-    if (select) {
+    if (select && select.length) {
       op.ProjectionExpression = QueryBuilder.buildProjectionExpression(select)
     }
 
-    if (where) {
+    if (where && Object.values(where).length) {
       op.FilterExpression = this.buildExpression(where)
       op.ExpressionAttributeNames = QueryBuilder.buildAttributeNames(where) as {
         [key: string]: string
