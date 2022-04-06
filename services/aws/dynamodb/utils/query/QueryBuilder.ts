@@ -157,7 +157,7 @@ class QueryBuilder {
   }: QueryBuilderParams<TEntity>): DynamoDB.DocumentClient.QueryInput {
     const { where, limit, select, orderDescending } = query
 
-    if (!where) {
+    if (!where || !Object.values(where).length) {
       // Where clauses must be provided on Query operations in dynamoDB
       throw new WhereClauseNotProvidedError()
     }
