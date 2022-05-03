@@ -1,15 +1,14 @@
-import { AxiosResponse } from 'axios'
+import { AxiosError, AxiosResponse, ResponseType } from 'axios'
 
 import Cache from '../../utils/caching/Cache'
 
-import { HttpClient, HttpRequestParams } from './HttpClient'
+import { HttpClient } from './HttpClient'
 import AxiosClient from './AxiosClient'
 import MachineTokenClient from './MachineTokenClient'
-import { isExpired } from '../../utils/tokens'
-
-type ResponseType = HttpRequestParams['responseType']
 
 class MachineClient {
+  private static readonly maxRetryDepth = 2
+
   protected bearerTokenInterceptorId?: number
 
   private tokenResponseInterceptorId?: number
@@ -100,11 +99,7 @@ class MachineClient {
   }
 
   protected async checkBearerToken(): Promise<void> {
-    let token = await this.getBearerToken()
-    if (isExpired(token)) {
-      await this.cache.remove(this.secretCacheKey)
-      token = await this.getBearerToken()
-    }
+    const token = await this.getBearerToken()
 
     if (this.bearerTokenInterceptorId && this.tokenResponseInterceptorId) {
       this.axiosClient.interceptors.request.eject(this.bearerTokenInterceptorId)
@@ -125,15 +120,25 @@ class MachineClient {
     )
     this.tokenResponseInterceptorId =
       this.axiosClient.interceptors.response.use(
-        async (response): Promise<AxiosResponse> => {
-          if (response.status !== 401) {
-            return response
+        (response) => response,
+        async (axiosError: AxiosError): Promise<AxiosResponse> => {
+          if (axiosError.response?.status !== 401) {
+            throw axiosError
           }
+
+          const retryDepth: number = (axiosError.config as any).retryDepth ?? 0
+          if (retryDepth >= MachineClient.maxRetryDepth) {
+            return Promise.reject(axiosError)
+          }
+
+          Object.assign(axiosError.config, {
+            retryDepth: retryDepth + 1,
+          })
 
           await this.cache.remove(this.secretCacheKey)
           await this.checkBearerToken()
 
-          return this.axiosClient.request(response.config)
+          return this.axiosClient.request(axiosError.config)
         },
       )
   }
