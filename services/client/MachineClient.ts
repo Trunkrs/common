@@ -7,11 +7,7 @@ import AxiosClient from './AxiosClient'
 import MachineTokenClient from './MachineTokenClient'
 
 class MachineClient {
-  private static readonly maxRetryDepth = 2
-
   protected bearerTokenInterceptorId?: number
-
-  private tokenResponseInterceptorId?: number
 
   public constructor(
     protected readonly machineTokenClient: MachineTokenClient,
@@ -101,11 +97,8 @@ class MachineClient {
   protected async checkBearerToken(): Promise<void> {
     const token = await this.getBearerToken()
 
-    if (this.bearerTokenInterceptorId && this.tokenResponseInterceptorId) {
+    if (this.bearerTokenInterceptorId) {
       this.axiosClient.interceptors.request.eject(this.bearerTokenInterceptorId)
-      this.axiosClient.interceptors.response.eject(
-        this.tokenResponseInterceptorId,
-      )
     }
 
     this.bearerTokenInterceptorId = this.axiosClient.interceptors.request.use(
@@ -118,29 +111,6 @@ class MachineClient {
         return Object.assign(config, { headers: modifiedHeaders })
       },
     )
-    this.tokenResponseInterceptorId =
-      this.axiosClient.interceptors.response.use(
-        (response) => response,
-        async (axiosError: AxiosError): Promise<AxiosResponse> => {
-          if (axiosError.response?.status !== 401) {
-            throw axiosError
-          }
-
-          const retryDepth: number = (axiosError.config as any).retryDepth ?? 0
-          if (retryDepth >= MachineClient.maxRetryDepth) {
-            return Promise.reject(axiosError)
-          }
-
-          Object.assign(axiosError.config, {
-            retryDepth: retryDepth + 1,
-          })
-
-          await this.cache.remove(this.secretCacheKey)
-          await this.checkBearerToken()
-
-          return this.axiosClient.request(axiosError.config)
-        },
-      )
   }
 }
 
