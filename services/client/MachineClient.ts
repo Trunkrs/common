@@ -9,8 +9,6 @@ import MachineTokenClient from './MachineTokenClient'
 class MachineClient {
   protected bearerTokenInterceptorId?: number
 
-  private bearerTokenPromise?: Promise<string>
-
   public constructor(
     protected readonly machineTokenClient: MachineTokenClient,
     protected readonly httpClient: HttpClient,
@@ -89,23 +87,11 @@ class MachineClient {
   }
 
   protected async getBearerToken(): Promise<string> {
-    if (this.bearerTokenPromise) {
-      return this.bearerTokenPromise
-    }
+    const token = await this.cache.getOrAdd(this.secretCacheKey, () => {
+      return this.machineTokenClient.getMachineToken()
+    })
 
-    this.bearerTokenPromise = this.cache.getOrAdd(
-      this.secretCacheKey,
-      async () => {
-        console.log('GETTING NEW EXACT TOKEN')
-        const machineToken = await this.machineTokenClient.getMachineToken()
-
-        this.bearerTokenPromise = undefined
-
-        return machineToken
-      },
-    )
-
-    return this.bearerTokenPromise
+    return token
   }
 
   protected async checkBearerToken(): Promise<void> {
