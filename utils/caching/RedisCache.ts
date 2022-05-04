@@ -37,15 +37,20 @@ class RedisCache extends Cache {
     key: string,
     factory: () => Promise<TValue>,
   ): Promise<TValue> {
+    console.info('[REDIS-CACHE]: attempting to get item')
     const item = await this.client.get(key)
 
     if (!item) {
       const newValue = await factory()
+
+      console.info('[REDIS-CACHE]: item not found, running factory method')
+
       await this.add(key, newValue)
 
       return newValue
     }
 
+    console.info('[REDIS-CACHE]: item found, returning value')
     const deserializedItem: CacheItem = this.serializer.deserialize(item)
     return deserializedItem.value as TValue
   }
