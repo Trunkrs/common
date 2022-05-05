@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse, ResponseType } from 'axios'
+import { ResponseType } from 'axios'
 
 import Cache from '../../utils/caching/Cache'
 
@@ -7,7 +7,7 @@ import AxiosClient from './AxiosClient'
 import MachineTokenClient from './MachineTokenClient'
 
 class MachineClient {
-  protected bearerTokenInterceptorId?: number
+  protected bearerTokenPromise?: Promise<string>
 
   public constructor(
     protected readonly machineTokenClient: MachineTokenClient,
@@ -34,10 +34,14 @@ class MachineClient {
     headers?: Record<string, any>,
     responseType?: ResponseType,
   ): Promise<TResponse> {
-    await this.checkBearerToken()
+    const bearerToken = await this.getBearerToken()
+
     const data = await this.httpClient.get<TResponse>({
       url: this.createUrl(resource),
-      headers,
+      headers: {
+        ...headers,
+        Authorization: `Bearer ${bearerToken}`,
+      },
       params: parameters,
       responseType,
     })
@@ -50,11 +54,15 @@ class MachineClient {
     body: TRequest,
     headers?: Record<string, any>,
   ): Promise<TResponse> {
-    await this.checkBearerToken()
+    const bearerToken = await this.getBearerToken()
+
     const data = await this.httpClient.post<TResponse, TRequest>({
       url: this.createUrl(resource),
       params: body,
-      headers,
+      headers: {
+        ...headers,
+        Authorization: `Bearer ${bearerToken}`,
+      },
     })
 
     return data
@@ -65,11 +73,15 @@ class MachineClient {
     body: TRequest,
     headers?: Record<string, any>,
   ): Promise<TResponse> {
-    await this.checkBearerToken()
+    const bearerToken = await this.getBearerToken()
+
     const data = await this.httpClient.put<TResponse, TRequest>({
       url: this.createUrl(resource),
       params: body,
-      headers,
+      headers: {
+        ...headers,
+        Authorization: `Bearer ${bearerToken}`,
+      },
     })
 
     return data
@@ -79,38 +91,31 @@ class MachineClient {
     resource: string,
     headers?: Record<string, any>,
   ): Promise<void> {
-    await this.checkBearerToken()
+    const bearerToken = await this.getBearerToken()
+
     await this.httpClient.delete({
       url: this.createUrl(resource),
-      headers,
+      headers: {
+        ...headers,
+        Authorization: `Bearer ${bearerToken}`,
+      },
     })
   }
 
   protected async getBearerToken(): Promise<string> {
-    const token = await this.cache.getOrAdd(this.secretCacheKey, () => {
+    if (this.bearerTokenPromise) {
+      return this.bearerTokenPromise
+    }
+
+    this.bearerTokenPromise = this.cache.getOrAdd(this.secretCacheKey, () => {
       return this.machineTokenClient.getMachineToken()
     })
 
-    return token
-  }
+    const bearerToken = await this.bearerTokenPromise
 
-  protected async checkBearerToken(): Promise<void> {
-    const token = await this.getBearerToken()
+    this.bearerTokenPromise = undefined
 
-    if (this.bearerTokenInterceptorId) {
-      this.axiosClient.interceptors.request.eject(this.bearerTokenInterceptorId)
-    }
-
-    this.bearerTokenInterceptorId = this.axiosClient.interceptors.request.use(
-      (config) => {
-        const modifiedHeaders = {
-          ...config.headers,
-          Authorization: `Bearer ${token}`,
-        }
-
-        return Object.assign(config, { headers: modifiedHeaders })
-      },
-    )
+    return bearerToken
   }
 }
 
