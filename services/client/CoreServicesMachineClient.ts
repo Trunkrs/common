@@ -27,7 +27,7 @@ class CoreServicesMachineClient extends MachineClient {
     query: string,
     params?: Array<string | number>,
   ): Promise<TReturn> {
-    await this.checkBearerToken()
+    const bearerToken = await this.getBearerToken()
 
     const response = await this.httpClient.put<
       CoreServicesQueryOutput<TReturn>,
@@ -39,6 +39,9 @@ class CoreServicesMachineClient extends MachineClient {
         params,
       },
       timeout: 30000,
+      headers: {
+        Authorization: `bearer ${bearerToken}`,
+      },
     })
 
     if (!response.result) {
