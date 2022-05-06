@@ -5,19 +5,43 @@ import SetOptions from './types/SetOptions'
 class RedisClient {
   private needsConnectionCounter = 0
 
-  private async connect() {
+  private connectionPromise?: Promise<void>
+
+  private disconnectionPromise?: Promise<void>
+
+  private async connect(): Promise<void> {
     this.needsConnectionCounter += 1
 
     if (this.needsConnectionCounter === 1) {
-      await this.client.connect()
+      if (this.connectionPromise) {
+        await this.disconnectionPromise
+
+        return
+      }
+
+      this.connectionPromise = this.client.connect()
+
+      await this.connectionPromise
+
+      this.connectionPromise = undefined
     }
   }
 
-  private async disconnect() {
+  private async disconnect(): Promise<void> {
     this.needsConnectionCounter -= 1
 
     if (!this.needsConnectionCounter) {
-      await this.client.disconnect()
+      if (this.disconnectionPromise) {
+        await this.disconnectionPromise
+
+        return
+      }
+
+      this.disconnectionPromise = this.client.disconnect()
+
+      await this.disconnectionPromise
+
+      this.disconnectionPromise = undefined
     }
   }
 
