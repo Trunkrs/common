@@ -12,7 +12,7 @@ import {
 
 const { SQS } = XRay.captureAWS(AWS)
 
-class SNSQueueClient implements QueueClient {
+class SQSQueueClient implements QueueClient {
   private readonly client = new SQS()
 
   constructor(
@@ -35,6 +35,7 @@ class SNSQueueClient implements QueueClient {
         MessageBody: this.serializer.serialize(request.message, 'string'),
         MessageGroupId: request.options?.messageGroupId,
         MessageDeduplicationId: request.options?.messageGroupId,
+        DelaySeconds: request.options?.delaySeconds,
       })
       .promise()
   }
@@ -49,9 +50,10 @@ class SNSQueueClient implements QueueClient {
         MessageBody: this.serializer.serialize(message, 'string'),
         MessageGroupId: request.options?.messageGroupId,
         MessageDeduplicationId: request.options?.messageGroupId,
+        DelaySeconds: request.options?.delaySeconds,
       })),
     })
   }
 }
 
-export default SNSQueueClient
+export default SQSQueueClient

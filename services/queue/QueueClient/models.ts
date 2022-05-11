@@ -1,6 +1,7 @@
 export interface SQSMessageOptions {
   deduplicationId?: string
   messageGroupId?: string
+  delaySeconds?: number
 }
 
 export interface SNSMessageOptions {
