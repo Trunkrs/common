@@ -10,7 +10,7 @@ import {
   QueueMessageRequest,
 } from './QueueClient'
 
-const { Kinesis } = XRay.captureAWS(AWS)
+const { Kinesis } = XRay.captureAWS(AWS) as typeof AWS
 
 class KinesisClient implements QueueClient {
   private readonly client = new Kinesis()
@@ -48,15 +48,17 @@ class KinesisClient implements QueueClient {
   public async sendBatchMessage<TMessage>(
     request: QueueBatchMessageRequest<TMessage, KinesisMessageOptions>,
   ): Promise<void> {
-    await this.client.putRecords({
-      StreamName: this.streamName,
-      Records: request.messages.map((message) => ({
-        Data: this.serializer.serialize(message, 'string'),
-        PartitionKey: request.options?.partitionKey ?? this.defaultPartition,
-        ExplicitHashKey: request.options?.hashKey,
-        SequenceNumberForOrdering: request.options?.sequenceNumber,
-      })),
-    })
+    await this.client
+      .putRecords({
+        StreamName: this.streamName,
+        Records: request.messages.map((message) => ({
+          Data: this.serializer.serialize(message, 'string'),
+          PartitionKey: request.options?.partitionKey ?? this.defaultPartition,
+          ExplicitHashKey: request.options?.hashKey,
+          SequenceNumberForOrdering: request.options?.sequenceNumber,
+        })),
+      })
+      .promise()
   }
 }
 
