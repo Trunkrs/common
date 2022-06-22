@@ -1,4 +1,3 @@
-import XRay from 'aws-xray-sdk'
 import AWS from 'aws-sdk'
 
 import { Serializer } from '../../utils/serialization'
@@ -10,12 +9,12 @@ import {
   QueueMessageRequest,
 } from './QueueClient'
 
-const { Kinesis } = XRay.captureAWS(AWS) as typeof AWS
-
 class KinesisClient implements QueueClient {
-  private readonly client = new Kinesis()
-
   public constructor(
+    /**
+     * The kinesis client from the AWS SDK
+     */
+    private readonly client: AWS.Kinesis,
     /**
      * The kinesis stream name to publish events to.
      */
