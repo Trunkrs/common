@@ -1,15 +1,16 @@
-import ServiceProvider, { Lifecycle } from '../utils/service-provider'
+import ServiceProvider, {Lifecycle} from '../utils/service-provider'
 
-import { ConsoleLogger, Logger as GenericLogger } from '../utils/logging'
+import {ConsoleLogger, Logger as GenericLogger} from '../utils/logging'
 import {
+  InternalAPIQueryStringSerializer,
   JSONSerializer,
   Serializer as GenericSerializer,
 } from '../utils/serialization'
-import { MemoryCache } from '../utils/caching'
+import {MemoryCache} from '../utils/caching'
 
-import { HttpClient as GenericHttpClient } from '../services/client/HttpClient'
+import {HttpClient as GenericHttpClient} from '../services/client/HttpClient'
 import AxiosClient from '../services/client/AxiosClient'
-import { OAuthClient } from '../services/client'
+import {OAuthClient} from '../services/client'
 
 export const Logger = ServiceProvider.createSymbol<GenericLogger>('Logger')
 export const Serializer =
@@ -35,6 +36,12 @@ utilsProvider.register(
   OAuthClient,
   Lifecycle.Singleton,
   () => new OAuthClient(utilsProvider.provide(HttpClient)),
+)
+
+utilsProvider.register(
+  InternalAPIQueryStringSerializer,
+  Lifecycle.Singleton,
+  () => new InternalAPIQueryStringSerializer(),
 )
 
 export default utilsProvider
