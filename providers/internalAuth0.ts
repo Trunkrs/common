@@ -11,8 +11,7 @@ import utilsProvider, { HttpClient, Logger, Serializer } from './utils'
 import { configureDailyTokenCache, DailyTokenCache } from './caching'
 import awsProvider from './aws'
 import { SecretsClient } from '../services/aws'
-import {Auth0MachineTokenClient} from './auth0'
-import {InternalAPIQueryStringSerializer} from '../utils/serialization'
+import { InternalAPIQueryStringSerializer } from '../utils/serialization'
 
 export const InternalAuth0MachineClient =
   ServiceProvider.createSymbol<MachineClient>('InternalAuth0MachineClient')
@@ -59,7 +58,7 @@ export const configureInternalAuth0Service = (
     Lifecycle.Singleton,
     () =>
       new InternalAPIMachineClient(
-        serviceProvider.provide(Auth0MachineTokenClient),
+        serviceProvider.provide(InternalAuth0MachineTokenClient),
         utilsProvider.provide(HttpClient),
         serviceProvider.provide(DailyTokenCache),
         appClientSecretName,
