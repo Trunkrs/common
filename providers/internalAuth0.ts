@@ -51,8 +51,6 @@ export const configureInternalAuth0Service = (
 
   utilsProvider.provide(Logger)
 
-
-
   serviceProvider.register(
     InternalAuth0MachineClient,
     Lifecycle.Singleton,
