@@ -2,6 +2,7 @@ import ServiceProvider, { Lifecycle } from '../utils/service-provider'
 
 import { ConsoleLogger, Logger as GenericLogger } from '../utils/logging'
 import {
+  InternalAPIQueryStringSerializer,
   JSONSerializer,
   Serializer as GenericSerializer,
 } from '../utils/serialization'
@@ -35,6 +36,12 @@ utilsProvider.register(
   OAuthClient,
   Lifecycle.Singleton,
   () => new OAuthClient(utilsProvider.provide(HttpClient)),
+)
+
+utilsProvider.register(
+  InternalAPIQueryStringSerializer,
+  Lifecycle.Singleton,
+  () => new InternalAPIQueryStringSerializer(),
 )
 
 export default utilsProvider
