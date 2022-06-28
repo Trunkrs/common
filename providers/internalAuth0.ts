@@ -17,7 +17,9 @@ export const InternalAuth0MachineClient =
   ServiceProvider.createSymbol<MachineClient>('InternalAuth0MachineClient')
 
 export const InternalAuth0MachineTokenClient =
-  ServiceProvider.createSymbol<MachineTokenClient>('InternalAuth0MachineTokenClient')
+  ServiceProvider.createSymbol<MachineTokenClient>(
+    'InternalAuth0MachineTokenClient',
+  )
 
 /**
  * Configures the necessary services for use with an Auth0 secured machine service for internal APIs which

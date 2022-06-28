@@ -48,7 +48,9 @@ class SecretCache extends GlobalAtomicCache {
 
   public async get<TValue>(key: string): Promise<TValue | null> {
     try {
-      this.logger.info('[SecretCache] - Fetching parameter')
+      this.logger.info('[SecretCache] - Fetching parameter', {
+        name: this.getFullParameterName(key),
+      })
       const parameter = await this.ssmClient
         .getParameter({
           Name: this.getFullParameterName(key),
