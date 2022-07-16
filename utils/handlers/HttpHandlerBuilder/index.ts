@@ -138,9 +138,15 @@ class HttpHandlerBuilder<TContext, TInput> {
 
         const convertedEvent = await this.proxyEventToActionInput(event)
         const [method, route] = this.extractActionInfo(event)
-        const result = await HttpControllerFactory.executeAction<
-          HTTPResult | undefined
-        >(method, route, convertedEvent)
+        const result = await Tracing.traceAsyncFunction(
+          `[${method}]: ${route}`,
+          async () => {
+            const actionResult = await HttpControllerFactory.executeAction<
+              HTTPResult | undefined
+            >(method, route, convertedEvent)
+            return actionResult
+          },
+        )()
 
         if (!result) {
           return this.formatSuccessResult(204)
