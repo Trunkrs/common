@@ -1,7 +1,4 @@
-import { SignatureV4 } from '@aws-sdk/signature-v4'
-import { fromTemporaryCredentials } from '@aws-sdk/credential-providers'
-import { randomUUID } from 'crypto'
-import { Sha256 } from '@aws-crypto/sha256-js'
+import { aws4Interceptor, InterceptorOptions } from 'aws4-axios'
 
 import ServiceProvider, {
   Lifecycle,
@@ -11,10 +8,8 @@ import { HttpClient } from '../services/client'
 import AwsV4SignedRequestClient from '../services/client/AwsV4SignedRequestClient'
 
 const configureApiGatewaySignedRequestProvider = (config: {
-  baseUrl: string
-  stsRoleArn: string
   httpClientSymbol: ServiceSymbol<HttpClient>
-  region: string
+  interceptorOptions: InterceptorOptions
 }): ServiceProvider => {
   const provider = new ServiceProvider()
 
@@ -22,20 +17,7 @@ const configureApiGatewaySignedRequestProvider = (config: {
     config.httpClientSymbol,
     Lifecycle.Singleton,
     () =>
-      new AwsV4SignedRequestClient(
-        config.baseUrl,
-        new SignatureV4({
-          credentials: fromTemporaryCredentials({
-            params: {
-              RoleArn: config.stsRoleArn,
-              RoleSessionName: randomUUID(),
-            },
-          }),
-          service: 'execute-api',
-          region: config.region,
-          sha256: Sha256,
-        }),
-      ),
+      new AwsV4SignedRequestClient(aws4Interceptor(config.interceptorOptions)),
   )
 
   return provider

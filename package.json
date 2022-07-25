@@ -7,12 +7,9 @@
   "author": "Leonard Breitkopf <leonard@trunkrs.nl>",
   "license": "MIT",
   "dependencies": {
-    "@aws-crypto/sha256-js": "^2.0.1",
-    "@aws-sdk/credential-providers": "^3.131.0",
-    "@aws-sdk/protocol-http": "^3.127.0",
-    "@aws-sdk/signature-v4": "^3.130.0",
     "aws-sdk": "^2.1067.0",
     "aws-xray-sdk": "^3.3.4",
+    "aws4-axios": "^2.4.9",
     "axios": "^0.21.4",
     "date-fns": "^2.25.0",
     "deepmerge": "^4.2.2",
