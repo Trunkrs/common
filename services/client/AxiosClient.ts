@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires,global-require */
-import Axios, { AxiosError } from 'axios'
+import Axios, { AxiosError, AxiosInstance } from 'axios'
 import { HttpRequestError } from '../../models/errors'
 
 import { HttpClient, HttpRequestParams } from './HttpClient'
@@ -7,10 +7,14 @@ import { HttpClient, HttpRequestParams } from './HttpClient'
 const defaultTimeout = 3000
 
 class AxiosClient implements HttpClient {
-  public readonly axiosClient = Axios.create({
-    httpAgent: new (require('http').Agent)(),
-    httpsAgent: new (require('https').Agent)(),
-  })
+  public readonly axiosClient: AxiosInstance
+
+  public constructor() {
+    this.axiosClient = Axios.create({
+      httpAgent: new (require('http').Agent)(),
+      httpsAgent: new (require('https').Agent)(),
+    })
+  }
 
   private static createError<TParams>(
     error: unknown,
