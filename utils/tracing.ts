@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires,global-require */
-import XRay, { Subsegment, SegmentLike } from 'aws-xray-sdk'
+import XRay, { Segment, Subsegment, SegmentLike } from 'aws-xray-sdk'
+import XRayCore from 'aws-xray-sdk-core'
+import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'http'
 import { MiddlewareLayer } from './handlers/HttpHandlerBuilder/types'
 
 class Tracing {
@@ -30,15 +32,105 @@ class Tracing {
     return Tracing.stack[Tracing.stack.length - 1]
   }
 
-  public static prepare(): void {
+  public static prepare(defaultName?: string): void {
     try {
       XRay.setContextMissingStrategy('LOG_ERROR')
+
+      XRayCore.middleware.setDefaultName(
+        defaultName ?? (process.env.AWS_LAMBDA_FUNCTION_NAME as string),
+      )
 
       XRay.captureHTTPsGlobal(require('http'))
       XRay.captureHTTPsGlobal(require('https'))
       XRay.capturePromise()
     } catch (error) {
       console.warn(`[Tracing]: ${(error as Error).message}`)
+    }
+  }
+
+  public static async hookRequestCycle(
+    request: AWSLambda.APIGatewayProxyEventV2,
+    actionExecutor: () => Promise<AWSLambda.APIGatewayProxyResultV2>,
+  ): Promise<AWSLambda.APIGatewayProxyResultV2> {
+    const headers = Object.keys(request.headers).reduce(
+      (newHeaders, headerName) =>
+        Object.assign(newHeaders, {
+          [headerName.toLowerCase()]: request.headers[headerName],
+        }),
+      {} as IncomingHttpHeaders,
+    )
+    const mimickedRequest = {
+      headers,
+      method: request.requestContext.http.method,
+      url: request.rawPath,
+      connection: {
+        secure: true,
+      },
+    } as unknown as IncomingMessage
+
+    const tracingHeader = XRayCore.middleware.processHeaders({ headers })
+    console.info('[Tracing]: Established xray header value', tracingHeader)
+
+    const name = XRayCore.middleware.resolveName(headers.host)
+    console.info('[Tracing]: Established handler name', name)
+
+    const segment = new Segment(name, tracingHeader.root, tracingHeader.parent)
+    console.info('[Tracing]: Created new segment', segment)
+
+    const combinedRequest = {
+      header: {},
+      req: mimickedRequest,
+    }
+
+    XRayCore.middleware.resolveSampling(
+      tracingHeader,
+      segment,
+      combinedRequest as unknown as ServerResponse,
+    )
+
+    console.info(
+      '[Tracing]: Resolved sampling & created request data',
+      new XRayCore.middleware.IncomingRequestData(mimickedRequest),
+    )
+
+    segment.addIncomingRequestData(
+      new XRayCore.middleware.IncomingRequestData(mimickedRequest),
+    )
+
+    console.info('[Tracing]: Starting action execution.')
+
+    try {
+      const response =
+        (await actionExecutor()) as AWSLambda.APIGatewayProxyStructuredResultV2
+
+      console.info(
+        '[Tracing]: Action execution done. Processing result',
+        response,
+      )
+
+      if (response.statusCode === 429) {
+        segment.addThrottleFlag()
+      }
+      const cause = XRayCore.utils.getCauseTypeFromHttpStatus(
+        response.statusCode as number,
+      )
+
+      // Determine segment flags
+      if (response.statusCode === 429) segment.addThrottleFlag()
+      if (cause === 'error') segment.addErrorFlag()
+      if (cause === 'fault') segment.addFaultFlag()
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore Yes, this is part of the internal typings. Refer to IncomingRequestData.close
+      segment.http.close(response)
+      segment.close()
+
+      console.info('[Tracing]: Segment processed successfully.')
+
+      return response
+    } catch (error) {
+      segment.close(error as Error | string)
+      throw error
     }
   }
 
@@ -91,9 +183,18 @@ class Tracing {
     fn: (...args: TArgs) => Promise<TResult>,
     parent?: SegmentLike,
   ): (...args: TArgs) => Promise<TResult> {
-    return (...args: TArgs) => {
-      return Tracing.tracePromise(methodName, fn(...args), parent)
-    }
+    return (...args: TArgs) =>
+      XRay.captureAsyncFunc(methodName, (subsegment) => {
+        return fn(...args)
+          .then((result) => {
+            subsegment?.close()
+            return result
+          })
+          .catch((error) => {
+            subsegment?.close(error)
+            throw error
+          })
+      })
   }
 
   public static middleWare: MiddlewareLayer = () => {
