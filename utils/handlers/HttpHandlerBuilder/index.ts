@@ -135,19 +135,13 @@ class HttpHandlerBuilder<TContext, TInput> {
     ): Promise<AWSLambda.APIGatewayProxyResultV2> =>
       Tracing.hookRequestCycle(event, async () => {
         try {
-          Tracing.prepare()
-
           const convertedEvent = await this.proxyEventToActionInput(event)
           const [method, route] = this.extractActionInfo(event)
-          const result = await Tracing.traceAsyncFunction(
-            `[${method}]: ${route}`,
-            async () => {
-              const actionResult = await HttpControllerFactory.executeAction<
-                HTTPResult | undefined
-              >(method, route, convertedEvent)
-              return actionResult
-            },
-          )()
+          Tracing.prepare(`[${method}]: ${route}`)
+
+          const result = await HttpControllerFactory.executeAction<
+            HTTPResult | undefined
+          >(method, route, convertedEvent)
 
           if (!result) {
             return this.formatSuccessResult(204)

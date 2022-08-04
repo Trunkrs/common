@@ -52,15 +52,16 @@ class Tracing {
     request: AWSLambda.APIGatewayProxyEventV2,
     actionExecutor: () => Promise<AWSLambda.APIGatewayProxyResultV2>,
   ): Promise<AWSLambda.APIGatewayProxyResultV2> {
-    const headers = Object.keys(request.headers).reduce(
-      (newHeaders, headerName) =>
-        Object.assign(newHeaders, {
-          [headerName.toLowerCase()]: request.headers[headerName],
-        }),
-      {
-        host: request.requestContext.domainName,
-      } as IncomingHttpHeaders,
-    )
+    const headers = {
+      ...Object.keys(request.headers).reduce(
+        (newHeaders, headerName) =>
+          Object.assign(newHeaders, {
+            [headerName.toLowerCase()]: request.headers[headerName],
+          }),
+        {} as IncomingHttpHeaders,
+      ),
+      host: request.requestContext.domainName,
+    }
     const mimickedRequest = {
       headers,
       method: request.requestContext.http.method,
@@ -69,6 +70,10 @@ class Tracing {
         secure: true,
       },
     } as unknown as IncomingMessage
+    console.info(
+      '[Tracing]: Created mimicked request',
+      JSON.stringify(mimickedRequest),
+    )
 
     const tracingHeader = XRayCore.middleware.processHeaders({ headers })
     console.info('[Tracing]: Established xray header value', tracingHeader)
