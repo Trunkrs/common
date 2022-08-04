@@ -36,9 +36,9 @@ class Tracing {
     try {
       XRay.setContextMissingStrategy('LOG_ERROR')
 
-      XRayCore.middleware.setDefaultName(
-        defaultName ?? (process.env.AWS_LAMBDA_FUNCTION_NAME as string),
-      )
+      if (defaultName) {
+        XRayCore.middleware.setDefaultName(defaultName)
+      }
 
       XRay.captureHTTPsGlobal(require('http'))
       XRay.captureHTTPsGlobal(require('https'))
