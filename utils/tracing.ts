@@ -57,7 +57,9 @@ class Tracing {
         Object.assign(newHeaders, {
           [headerName.toLowerCase()]: request.headers[headerName],
         }),
-      {} as IncomingHttpHeaders,
+      {
+        host: request.requestContext.domainName,
+      } as IncomingHttpHeaders,
     )
     const mimickedRequest = {
       headers,

@@ -132,32 +132,33 @@ class HttpHandlerBuilder<TContext, TInput> {
 
     return async (
       event: AWSLambda.APIGatewayProxyEventV2,
-    ): Promise<AWSLambda.APIGatewayProxyResultV2> => {
-      try {
-        Tracing.prepare()
+    ): Promise<AWSLambda.APIGatewayProxyResultV2> =>
+      Tracing.hookRequestCycle(event, async () => {
+        try {
+          Tracing.prepare()
 
-        const convertedEvent = await this.proxyEventToActionInput(event)
-        const [method, route] = this.extractActionInfo(event)
-        const result = await Tracing.traceAsyncFunction(
-          `[${method}]: ${route}`,
-          async () => {
-            const actionResult = await HttpControllerFactory.executeAction<
-              HTTPResult | undefined
-            >(method, route, convertedEvent)
-            return actionResult
-          },
-        )()
+          const convertedEvent = await this.proxyEventToActionInput(event)
+          const [method, route] = this.extractActionInfo(event)
+          const result = await Tracing.traceAsyncFunction(
+            `[${method}]: ${route}`,
+            async () => {
+              const actionResult = await HttpControllerFactory.executeAction<
+                HTTPResult | undefined
+              >(method, route, convertedEvent)
+              return actionResult
+            },
+          )()
 
-        if (!result) {
-          return this.formatSuccessResult(204)
+          if (!result) {
+            return this.formatSuccessResult(204)
+          }
+
+          const { statusCode, body } = result
+          return this.formatSuccessResult(statusCode, body)
+        } catch (error) {
+          return this.formatErrorResult(error)
         }
-
-        const { statusCode, body } = result
-        return this.formatSuccessResult(statusCode, body)
-      } catch (error) {
-        return this.formatErrorResult(error)
-      }
-    }
+      })
   }
 
   private extractActionInfo(
