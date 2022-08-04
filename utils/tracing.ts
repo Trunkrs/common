@@ -52,6 +52,10 @@ class Tracing {
     request: AWSLambda.APIGatewayProxyEventV2,
     actionExecutor: () => Promise<AWSLambda.APIGatewayProxyResultV2>,
   ): Promise<AWSLambda.APIGatewayProxyResultV2> {
+    Tracing.prepare(
+      `[${request.requestContext.http.method}]: ${request.requestContext.http.path}`,
+    )
+
     const headers = {
       ...Object.keys(request.headers).reduce(
         (newHeaders, headerName) =>
