@@ -129,7 +129,13 @@ class Tracing {
 
       console.info('[Tracing]: Segment processed successfully.')
 
-      return response
+      return {
+        ...response,
+        headers: {
+          ...response.headers,
+          ...combinedRequest.header,
+        },
+      }
     } catch (error) {
       segment.close(error as Error | string)
       throw error
