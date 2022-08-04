@@ -4,6 +4,8 @@ import XRayCore from 'aws-xray-sdk-core'
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'http'
 import { MiddlewareLayer } from './handlers/HttpHandlerBuilder/types'
 
+const traceIdHeaderName = 'x-amzn-trace-id'
+
 class Tracing {
   private static readonly stack: Array<SegmentLike> = []
 
@@ -79,7 +81,13 @@ class Tracing {
       JSON.stringify(mimickedRequest),
     )
 
-    const tracingHeader = XRayCore.middleware.processHeaders({ headers })
+    const tracingHeader = XRayCore.middleware.processHeaders({
+      headers: {
+        // eslint-disable-next-line no-underscore-dangle
+        [traceIdHeaderName]: (process.env._X_AMZN_TRACE_ID ??
+          (headers as any)[traceIdHeaderName]) as string,
+      },
+    })
     console.info('[Tracing]: Established xray header value', tracingHeader)
 
     const name = XRayCore.middleware.resolveName(headers.host)
