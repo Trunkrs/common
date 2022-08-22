@@ -146,8 +146,8 @@ class HttpHandlerBuilder<TContext, TInput> {
             return this.formatSuccessResult(204)
           }
 
-          const { statusCode, body } = result
-          return this.formatSuccessResult(statusCode, body)
+          const { statusCode, body, headers } = result
+          return this.formatSuccessResult(statusCode, headers, body)
         } catch (error) {
           return this.formatErrorResult(error)
         }
@@ -242,6 +242,7 @@ class HttpHandlerBuilder<TContext, TInput> {
 
   private formatSuccessResult(
     statusCode: number,
+    headers?: { [key: string]: string },
     body?: any,
   ): AWSLambda.APIGatewayProxyResultV2 {
     switch (typeof body) {
@@ -249,6 +250,7 @@ class HttpHandlerBuilder<TContext, TInput> {
         if (body instanceof Buffer) {
           return {
             statusCode,
+            headers: headers ?? {},
             body: body.toString('base64'),
             isBase64Encoded: true,
           }
@@ -258,6 +260,7 @@ class HttpHandlerBuilder<TContext, TInput> {
           statusCode,
           body: this.serializer.serialize(body, 'string'),
           headers: {
+            ...(headers ?? {}),
             'Content-Type': 'application/json',
           },
         }
@@ -265,6 +268,7 @@ class HttpHandlerBuilder<TContext, TInput> {
       case 'string':
         return {
           isBase64Encoded: true,
+          headers: headers ?? {},
           body,
           statusCode,
         }
@@ -274,12 +278,14 @@ class HttpHandlerBuilder<TContext, TInput> {
       case 'boolean':
         return {
           statusCode,
+          headers: headers ?? {},
           body: String(body),
         }
 
       default:
         return {
           statusCode,
+          headers: headers ?? {},
         }
     }
   }

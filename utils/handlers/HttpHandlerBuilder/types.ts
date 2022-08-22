@@ -17,6 +17,7 @@ export interface HTTPReply {
 export interface HTTPResult<TBody = unknown> {
   statusCode: number
   body?: TBody
+  headers?: { [key: string]: string }
 }
 
 export interface HTTPEvent<TContext = unknown, TInput = unknown> {

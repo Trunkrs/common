@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires,global-require */
-import XRay, { Segment, Subsegment, SegmentLike } from 'aws-xray-sdk'
+import XRay, { Subsegment, SegmentLike } from 'aws-xray-sdk'
 import XRayCore from 'aws-xray-sdk-core'
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'http'
 import { MiddlewareLayer } from './handlers/HttpHandlerBuilder/types'
-
-const traceIdHeaderName = 'x-amzn-trace-id'
 
 class Tracing {
   private static readonly stack: Array<SegmentLike> = []
@@ -54,109 +52,73 @@ class Tracing {
     request: AWSLambda.APIGatewayProxyEventV2,
     actionExecutor: () => Promise<AWSLambda.APIGatewayProxyResultV2>,
   ): Promise<AWSLambda.APIGatewayProxyResultV2> {
-    Tracing.prepare(
-      `[${request.requestContext.http.method}]: ${request.requestContext.http.path}`,
-    )
+    Tracing.prepare()
 
-    const headers = {
-      ...Object.keys(request.headers).reduce(
-        (newHeaders, headerName) =>
-          Object.assign(newHeaders, {
-            [headerName.toLowerCase()]: request.headers[headerName],
-          }),
-        {} as IncomingHttpHeaders,
-      ),
-      host: request.requestContext.domainName,
-    }
     const mimickedRequest = {
-      headers,
+      headers: {
+        ...Object.keys(request.headers).reduce(
+          (newHeaders, headerName) =>
+            Object.assign(newHeaders, {
+              [headerName.toLowerCase()]: request.headers[headerName],
+            }),
+          {} as IncomingHttpHeaders,
+        ),
+        host: request.requestContext.domainName,
+      },
       method: request.requestContext.http.method,
       url: request.rawPath,
       connection: {
         secure: true,
       },
     } as unknown as IncomingMessage
-    console.info(
-      '[Tracing]: Created mimicked request',
-      JSON.stringify(mimickedRequest),
-    )
 
-    const tracingHeader = XRayCore.middleware.processHeaders({
-      headers: {
-        // eslint-disable-next-line no-underscore-dangle
-        [traceIdHeaderName]: (process.env._X_AMZN_TRACE_ID ??
-          (headers as any)[traceIdHeaderName]) as string,
+    return XRay.captureAsyncFunc(
+      `${mimickedRequest.method} ${mimickedRequest.url}`,
+      async (subsegment) => {
+        try {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore This is in fact the correct way :shrug:
+          // eslint-disable-next-line no-param-reassign
+          subsegment.http = new XRayCore.middleware.IncomingRequestData(
+            mimickedRequest,
+          )
+
+          const response =
+            (await actionExecutor()) as AWSLambda.APIGatewayProxyStructuredResultV2
+
+          if (!subsegment) {
+            console.info('[Tracing]: No segment to process.')
+            return response
+          }
+
+          if (response.statusCode === 429) {
+            subsegment.addThrottleFlag()
+          }
+          const cause = XRayCore.utils.getCauseTypeFromHttpStatus(
+            response.statusCode as number,
+          )
+
+          // Determine segment flags
+          if (response.statusCode === 429) subsegment.addThrottleFlag()
+          if (cause === 'error') subsegment.addErrorFlag()
+          if (cause === 'fault') subsegment.addFaultFlag()
+
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore Yes, this is part of the internal typings. Refer to IncomingRequestData.close
+          subsegment.http.close(response)
+          subsegment.close()
+
+          console.info('[Tracing]: Segment processed successfully.')
+
+          return response
+        } catch (error) {
+          if (subsegment) {
+            subsegment.close(error as Error | string)
+          }
+          throw error
+        }
       },
-    })
-    console.info('[Tracing]: Established xray header value', tracingHeader)
-
-    const name = XRayCore.middleware.resolveName(headers.host)
-    console.info('[Tracing]: Established handler name', name)
-
-    const segment = new Segment(name, tracingHeader.root, tracingHeader.parent)
-    console.info('[Tracing]: Created new segment', segment)
-
-    const combinedRequest = {
-      header: {},
-      req: mimickedRequest,
-    }
-
-    XRayCore.middleware.resolveSampling(
-      tracingHeader,
-      segment,
-      combinedRequest as unknown as ServerResponse,
     )
-
-    console.info(
-      '[Tracing]: Resolved sampling & created request data',
-      new XRayCore.middleware.IncomingRequestData(mimickedRequest),
-    )
-
-    segment.addIncomingRequestData(
-      new XRayCore.middleware.IncomingRequestData(mimickedRequest),
-    )
-
-    console.info('[Tracing]: Starting action execution.')
-
-    try {
-      const response =
-        (await actionExecutor()) as AWSLambda.APIGatewayProxyStructuredResultV2
-
-      console.info(
-        '[Tracing]: Action execution done. Processing result',
-        response,
-      )
-
-      if (response.statusCode === 429) {
-        segment.addThrottleFlag()
-      }
-      const cause = XRayCore.utils.getCauseTypeFromHttpStatus(
-        response.statusCode as number,
-      )
-
-      // Determine segment flags
-      if (response.statusCode === 429) segment.addThrottleFlag()
-      if (cause === 'error') segment.addErrorFlag()
-      if (cause === 'fault') segment.addFaultFlag()
-
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore Yes, this is part of the internal typings. Refer to IncomingRequestData.close
-      segment.http.close(response)
-      segment.close()
-
-      console.info('[Tracing]: Segment processed successfully.')
-
-      return {
-        ...response,
-        headers: {
-          ...response.headers,
-          ...combinedRequest.header,
-        },
-      }
-    } catch (error) {
-      segment.close(error as Error | string)
-      throw error
-    }
   }
 
   public static addSegment(name: string, parent?: SegmentLike): Subsegment {
