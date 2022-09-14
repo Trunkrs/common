@@ -21,12 +21,9 @@ class AxiosClient implements HttpClient {
     request: HttpRequestParams<TParams>,
   ): Error {
     const axiosError = error as AxiosError
-    if (!axiosError.isAxiosError) {
-      return error as Error
-    }
 
     return new HttpRequestError(
-      axiosError,
+      error,
       request,
       axiosError.response?.status,
       axiosError.response?.headers,
