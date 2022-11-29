@@ -1,6 +1,6 @@
 import {Serializer} from '../../utils/serialization'
 
-class LambdaClient<TInvokeArgs, TResponse> {
+class LambdaClient<TResponse, TInvokeArgs> {
   public constructor(
     protected readonly functionArn: string,
     protected readonly serializer: Serializer,
