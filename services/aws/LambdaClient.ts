@@ -8,7 +8,9 @@ class LambdaClient<TInvokeArgs, TResponse> {
   ) {}
 
   public async invokeLambda(args?: TInvokeArgs): Promise<TResponse | void> {
-    const serializedInput = this.serializer.serialize(args, 'string')
+    const serializedInput = !!args
+      ? this.serializer.serialize(args, 'string')
+      : undefined
 
     const result = await this.lambdaInstance.invoke({
       Payload: serializedInput,
