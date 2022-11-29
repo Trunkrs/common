@@ -4,13 +4,13 @@ import Cache from '../../utils/caching/Cache'
 
 import { HttpClient } from './HttpClient'
 import AxiosClient from './AxiosClient'
-import MachineTokenClient from './MachineTokenClient'
+import MachineTokenClientBase from './MachineTokenClient/MachineTokenClientBase'
 
 class MachineClient {
   protected bearerTokenPromise?: Promise<string>
 
   public constructor(
-    protected readonly machineTokenClient: MachineTokenClient,
+    protected readonly machineTokenClient: MachineTokenClientBase,
     protected readonly httpClient: HttpClient,
     protected readonly cache: Cache,
     protected readonly secretCacheKey: string,
