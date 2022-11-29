@@ -6,8 +6,9 @@ import { Serializer } from '../../../utils/serialization'
 import OAuthClient from '../OAuthClient'
 
 import TokenNotFoundError from './TokenNotFoundError'
+import MachineTokenClientBase from './MachineTokenClientBase'
 
-class MachineTokenClient {
+class MachineTokenClient implements MachineTokenClientBase {
   public constructor(
     protected readonly appClientSecretName: string,
     protected readonly secretsClient: SecretsClient,
