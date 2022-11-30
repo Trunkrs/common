@@ -1,4 +1,5 @@
-import {Serializer} from '../../utils/serialization'
+import { Serializer } from '../../utils/serialization'
+import LambdaInvocationFailedError from './LambdaInvocationFailedError'
 
 class LambdaClient<TResponse = unknown, TInvokeArgs = unknown> {
   public constructor(
@@ -16,6 +17,11 @@ class LambdaClient<TResponse = unknown, TInvokeArgs = unknown> {
       Payload: serializedInput,
       FunctionName: this.functionArn,
     }).promise()
+
+
+    if (result.FunctionError) {
+      throw new LambdaInvocationFailedError(result.FunctionError)
+    }
 
     if (!result.Payload) {
       return
