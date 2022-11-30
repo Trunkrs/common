@@ -1,4 +1,4 @@
-import { Serializer } from '../../utils/serialization'
+import { Serializer } from '../../../utils/serialization'
 import LambdaInvocationFailedError from './LambdaInvocationFailedError'
 
 class LambdaClient<TResponse = unknown, TInvokeArgs = unknown> {
