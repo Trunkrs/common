@@ -5,7 +5,7 @@ class LambdaInvocationFailedError extends ErrorBase {
     super()
 
     this.message =
-      'exact token exchange failed for the second time. No other lambda function set the token'
+      `Lambda Invocation Failed with error: ${JSON.stringify(error, null, 2)}`
     Error.captureStackTrace(this)
   }
 }
