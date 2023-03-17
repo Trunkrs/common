@@ -1,4 +1,3 @@
-import XRay from 'aws-xray-sdk'
 import AWS from 'aws-sdk'
 import { v1 as uuidV1 } from 'uuid'
 
@@ -10,8 +9,9 @@ import {
   QueueMessageRequest,
   SNSMessageOptions,
 } from './QueueClient'
+import getAWS from '../../utils/getAWS'
 
-const { SNS } = XRay.captureAWS(AWS)
+const { SNS } = getAWS()
 
 class SNSQueueClient implements QueueClient {
   private static translateJStypeToSNSType(typeName: string): string {

@@ -1,8 +1,7 @@
-import XRay from 'aws-xray-sdk'
-import AWS from 'aws-sdk'
 import StateMachineClient from './StateMachineClient'
+import getAWS from '../../utils/getAWS'
 
-const { StepFunctions } = XRay.captureAWS(AWS)
+const { StepFunctions } = getAWS()
 
 class StepFunctionsClient implements StateMachineClient {
   private readonly client = new StepFunctions()

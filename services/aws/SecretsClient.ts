@@ -1,9 +1,7 @@
-import XRay from 'aws-xray-sdk'
-import AWS from 'aws-sdk'
-
 import Cache from '../../utils/caching/Cache'
+import getAWS from '../../utils/getAWS'
 
-const { SecretsManager } = XRay.captureAWS(AWS)
+const { SecretsManager } = getAWS()
 
 class SecretsClient {
   private readonly secretsManager = new SecretsManager()

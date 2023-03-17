@@ -1,10 +1,10 @@
 /* eslint-disable no-await-in-loop */
-import XRay from 'aws-xray-sdk'
 import AWS from 'aws-sdk'
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
 import PaginatedFindResult from './interfaces/PaginatedFindResult'
+import getAWS from '../../../utils/getAWS'
 
-const { DynamoDB } = XRay.captureAWS(AWS)
+const { DynamoDB } = getAWS()
 
 abstract class BaseDynamoDataStorage<TEntity> {
   protected abstract readonly keys: Array<keyof TEntity>
