@@ -1,6 +1,7 @@
 import BaseDynamoDataStorage from './BaseDynamoDataStorage'
 import { QueryBuilder, QueryParameters } from './utils'
 import QueryableDataStorage from './interfaces/QueryableDataStorage'
+import PaginatedFindResult from './interfaces/PaginatedFindResult'
 
 abstract class DynamoIndexDataStorage<TEntity>
   extends BaseDynamoDataStorage<TEntity>
@@ -30,6 +31,31 @@ abstract class DynamoIndexDataStorage<TEntity>
         : QueryBuilder.buildQuery(builderParams)
 
     const result = await this.executeOperation<TResultEntity>(queryOp, ddbQuery)
+    return result
+  }
+
+  public async paginatedFind<TResultEntity = TEntity>(
+    query: QueryParameters<TEntity>,
+    lastEvaluatedKey?: string
+  ): Promise<PaginatedFindResult<TResultEntity>> {
+    const queryOp = query.queryOptions?.operation ?? 'Query'
+    const builderParams  = {
+      query,
+      tableName: this.tableName,
+      primaryKeys: this.keys,
+      indexName: this.indexName,
+    }
+
+    const ddbQuery = queryOp === 'Scan'
+      ? QueryBuilder.buildScan(builderParams)
+      : QueryBuilder.buildQuery(builderParams)
+
+    const result = await this.executePaginatedOperation<TResultEntity>(
+      queryOp,
+      ddbQuery,
+      lastEvaluatedKey
+    )
+
     return result
   }
 
