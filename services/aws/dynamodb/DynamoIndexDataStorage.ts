@@ -36,24 +36,25 @@ abstract class DynamoIndexDataStorage<TEntity>
 
   public async paginatedFind<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
-    lastEvaluatedKey?: string
+    lastEvaluatedKey?: string,
   ): Promise<PaginatedFindResult<TResultEntity>> {
     const queryOp = query.queryOptions?.operation ?? 'Query'
-    const builderParams  = {
+    const builderParams = {
       query,
       tableName: this.tableName,
       primaryKeys: this.keys,
       indexName: this.indexName,
     }
 
-    const ddbQuery = queryOp === 'Scan'
-      ? QueryBuilder.buildScan(builderParams)
-      : QueryBuilder.buildQuery(builderParams)
+    const ddbQuery =
+      queryOp === 'Scan'
+        ? QueryBuilder.buildScan(builderParams)
+        : QueryBuilder.buildQuery(builderParams)
 
     const result = await this.executePaginatedOperation<TResultEntity>(
       queryOp,
       ddbQuery,
-      lastEvaluatedKey
+      lastEvaluatedKey,
     )
 
     return result

@@ -32,25 +32,25 @@ abstract class DynamoDataStorage<TEntity>
       )
     }
 
-    await Promise.all(
-      batches.map(async (batch: DynamoDB.DocumentClient.WriteRequest[]) => {
-        let requestItems: BatchWriteItemRequestMap | undefined = {
-          [this.tableName]: batch,
-        }
+    for (let i = 0; i < batches.length; i += 1) {
+      const batch = batches[i]
 
-        do {
-          const result: DynamoDB.DocumentClient.BatchWriteItemOutput =
-            // eslint-disable-next-line no-await-in-loop
-            await this.documentClient
-              .batchWrite({
-                RequestItems: requestItems,
-              })
-              .promise()
+      let requestItems: BatchWriteItemRequestMap | undefined = {
+        [this.tableName]: batch,
+      }
 
-          requestItems = result.UnprocessedItems
-        } while (requestItems && Object.keys(requestItems).length > 0)
-      }),
-    )
+      do {
+        const result: DynamoDB.DocumentClient.BatchWriteItemOutput =
+          // eslint-disable-next-line no-await-in-loop
+          await this.documentClient
+            .batchWrite({
+              RequestItems: requestItems,
+            })
+            .promise()
+
+        requestItems = result.UnprocessedItems
+      } while (requestItems && Object.keys(requestItems).length > 0)
+    }
   }
 
   /**
