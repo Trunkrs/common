@@ -10,6 +10,12 @@ export interface HttpRequestParams<TParams = unknown> {
   params?: TParams
 
   /**
+   * Forces the parameters to go onto the BODY part and are not encoded on the url.
+   * Usually only available on GET and DELETE requests.
+   */
+  forceParamsOnBody?: boolean
+
+  /**
    * The optional headers to add to the request.
    */
   headers?: Record<string, any>

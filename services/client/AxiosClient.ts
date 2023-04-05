@@ -35,13 +35,21 @@ class AxiosClient implements HttpClient {
     request: HttpRequestParams<TParams>,
   ): Promise<TResult> {
     try {
-      const response = await this.axiosClient.get<TResult>(request.url, {
+      const config = {
         auth: request.authentication,
-        params: request.params,
+        params: request.params && !request.forceParamsOnBody
+          ? request.params
+          : undefined,
+        data: request.params && request.forceParamsOnBody
+          ? request.params
+          : undefined,
         headers: request.headers,
         timeout: request.timeout ?? defaultTimeout,
         responseType: request.responseType ?? 'json',
-      })
+      }
+
+      const response =
+        await this.axiosClient.get<TResult>(request.url, config)
 
       return response.data
     } catch (error) {
@@ -95,13 +103,20 @@ class AxiosClient implements HttpClient {
     request: HttpRequestParams<TParams>,
   ): Promise<void> {
     try {
-      await this.axiosClient.delete(request.url, {
+      const config = {
         auth: request.authentication,
-        params: request.params,
+        params: request.params && !request.forceParamsOnBody
+          ? request.params
+          : undefined,
+        data: request.params && request.forceParamsOnBody
+          ? request.params
+          : undefined,
         headers: request.headers,
         timeout: request.timeout ?? defaultTimeout,
         responseType: request.responseType ?? 'json',
-      })
+      }
+
+      await this.axiosClient.delete(request.url, config)
     } catch (error) {
       throw AxiosClient.createError(error, request)
     }
