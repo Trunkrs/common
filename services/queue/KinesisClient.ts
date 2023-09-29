@@ -1,4 +1,8 @@
-import AWS from 'aws-sdk'
+import {
+  KinesisClient as AWSKinesisClient,
+  PutRecordCommand,
+  PutRecordsCommand,
+} from '@aws-sdk/client-kinesis'
 
 import { Serializer } from '../../utils/serialization'
 
@@ -14,7 +18,7 @@ class KinesisClient implements QueueClient {
     /**
      * The kinesis client from the AWS SDK
      */
-    private readonly client: AWS.Kinesis,
+    private readonly client: AWSKinesisClient,
     /**
      * The kinesis stream name to publish events to.
      */
@@ -33,31 +37,31 @@ class KinesisClient implements QueueClient {
   public async sendMessage<TMessage>(
     request: QueueMessageRequest<TMessage, KinesisMessageOptions>,
   ): Promise<void> {
-    await this.client
-      .putRecord({
-        StreamName: this.streamName,
-        Data: this.serializer.serialize(request.message, 'string'),
-        PartitionKey: request.options?.partitionKey ?? this.defaultPartition,
-        ExplicitHashKey: request.options?.hashKey,
-        SequenceNumberForOrdering: request.options?.sequenceNumber,
-      })
-      .promise()
+    const command = new PutRecordCommand({
+      StreamName: this.streamName,
+      Data: this.serializer.serialize(request.message, 'buffer'),
+      PartitionKey: request.options?.partitionKey ?? this.defaultPartition,
+      ExplicitHashKey: request.options?.hashKey,
+      SequenceNumberForOrdering: request.options?.sequenceNumber,
+    })
+
+    await this.client.send(command)
   }
 
   public async sendBatchMessage<TMessage>(
     request: QueueBatchMessageRequest<TMessage, KinesisMessageOptions>,
   ): Promise<void> {
-    await this.client
-      .putRecords({
-        StreamName: this.streamName,
-        Records: request.messages.map((message) => ({
-          Data: this.serializer.serialize(message, 'string'),
-          PartitionKey: request.options?.partitionKey ?? this.defaultPartition,
-          ExplicitHashKey: request.options?.hashKey,
-          SequenceNumberForOrdering: request.options?.sequenceNumber,
-        })),
-      })
-      .promise()
+    const command = new PutRecordsCommand({
+      StreamName: this.streamName,
+      Records: request.messages.map((message) => ({
+        Data: this.serializer.serialize(message, 'buffer'),
+        PartitionKey: request.options?.partitionKey ?? this.defaultPartition,
+        ExplicitHashKey: request.options?.hashKey,
+        SequenceNumberForOrdering: request.options?.sequenceNumber,
+      })),
+    })
+
+    await this.client.send(command)
   }
 }
 
