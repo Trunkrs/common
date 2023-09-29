@@ -7,8 +7,6 @@
   "author": "Leonard Breitkopf <leonard@trunkrs.nl>",
   "license": "MIT",
   "dependencies": {
-    "aws-sdk": "^2.1067.0",
-    "aws-xray-sdk": "^3.3.4",
     "aws4-axios": "^2.4.9",
     "axios": "^0.21.4",
     "date-fns": "^2.25.0",
@@ -20,7 +18,8 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.92",
+    "@aws-sdk/client-sns": "^3.421.0",
+    "@aws-sdk/client-sqs": "^3.421.0",
     "@types/faker": "^5.5.8",
     "@types/jest": "^27.0.1",
     "@types/joi": "^17.2.3",
@@ -53,7 +52,6 @@
       "@typescript-eslint/eslint-plugin": ">=4 || <5",
       "@typescript-eslint/parser": ">=4 || <5",
       "redis": ">=4 || <5",
-      "aws-sdk": ">2.1000.0 || <3",
       "date-fns": ">=2 || <3",
       "eslint": ">=7.2.0",
       "eslint-config-airbnb-base-typescript-prettier": ">=3.1 || <4",
@@ -65,7 +63,6 @@
       "ts-jest": ">=21"
     },
     "dep": {
-      "aws-xray-sdk": "^3.3.4",
       "axios": "^0.22.0",
       "qs": "^6.10.1",
       "deepmerge": "^4.2.2"

@@ -1,3 +1,9 @@
+import {
+  SQSClient,
+  SendMessageCommand,
+  SendMessageBatchCommand,
+} from '@aws-sdk/client-sqs'
+
 import Serializer from '../../utils/serialization/Serializer'
 
 import {
@@ -6,12 +12,9 @@ import {
   QueueMessageRequest,
   SQSMessageOptions,
 } from './QueueClient'
-import getAWS from '../../utils/getAWS'
-
-const { SQS } = getAWS()
 
 class SQSQueueClient implements QueueClient {
-  private readonly client = new SQS()
+  private readonly client = new SQSClient()
 
   constructor(
     /**
@@ -27,21 +30,21 @@ class SQSQueueClient implements QueueClient {
   public async sendMessage<TMessage>(
     request: QueueMessageRequest<TMessage, SQSMessageOptions>,
   ): Promise<void> {
-    await this.client
-      .sendMessage({
-        QueueUrl: this.queueUrl,
-        MessageBody: this.serializer.serialize(request.message, 'string'),
-        MessageGroupId: request.options?.messageGroupId,
-        MessageDeduplicationId: request.options?.messageGroupId,
-        DelaySeconds: request.options?.delaySeconds,
-      })
-      .promise()
+    const command = new SendMessageCommand({
+      QueueUrl: this.queueUrl,
+      MessageBody: this.serializer.serialize(request.message, 'string'),
+      MessageGroupId: request.options?.messageGroupId,
+      MessageDeduplicationId: request.options?.messageGroupId,
+      DelaySeconds: request.options?.delaySeconds,
+    })
+
+    await this.client.send(command)
   }
 
   public async sendBatchMessage<TMessage>(
     request: QueueBatchMessageRequest<TMessage, SQSMessageOptions>,
   ): Promise<void> {
-    await this.client.sendMessageBatch({
+    const command = new SendMessageBatchCommand({
       QueueUrl: this.queueUrl,
       Entries: request.messages.map((message, index) => ({
         Id: String(index),
@@ -51,6 +54,8 @@ class SQSQueueClient implements QueueClient {
         DelaySeconds: request.options?.delaySeconds,
       })),
     })
+
+    await this.client.send(command)
   }
 }
 

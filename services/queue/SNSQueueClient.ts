@@ -1,4 +1,9 @@
-import AWS from 'aws-sdk'
+import {
+  SNSClient,
+  PublishCommand,
+  PublishBatchCommand,
+  MessageAttributeValue,
+} from '@aws-sdk/client-sns'
 import { v1 as uuidV1 } from 'uuid'
 
 import Serializer from '../../utils/serialization/Serializer'
@@ -9,9 +14,6 @@ import {
   QueueMessageRequest,
   SNSMessageOptions,
 } from './QueueClient'
-import getAWS from '../../utils/getAWS'
-
-const { SNS } = getAWS()
 
 class SNSQueueClient implements QueueClient {
   private static translateJStypeToSNSType(typeName: string): string {
@@ -29,7 +31,7 @@ class SNSQueueClient implements QueueClient {
 
   private static translateAttributesToSNSAttributes(attributes: {
     [key: string]: string | number | boolean
-  }): { [key: string]: AWS.SNS.MessageAttributeValue } {
+  }): Record<string, MessageAttributeValue> {
     // Turn optional message attributes into SNS equivalents
     return Object.keys(attributes).reduce(
       (keyMap, attrKey) =>
@@ -41,11 +43,11 @@ class SNSQueueClient implements QueueClient {
             StringValue: String(attributes[attrKey]),
           },
         }),
-      {} as { [key: string]: AWS.SNS.Types.MessageAttributeValue },
+      {},
     )
   }
 
-  private readonly client = new SNS()
+  private readonly client = new SNSClient()
 
   constructor(
     /**
@@ -67,31 +69,20 @@ class SNSQueueClient implements QueueClient {
         )
       : {}
 
-    await this.client
-      .publish({
-        TopicArn: this.topicArn,
-        Message: this.serializer.serialize(request.message, 'string'),
-        MessageGroupId: request.options?.messageGroupId,
-        MessageDeduplicationId: request.options?.messageDeduplicationId,
-        MessageAttributes: attributes,
-      })
-      .promise()
+    const command = new PublishCommand({
+      TopicArn: this.topicArn,
+      Message: this.serializer.serialize(request.message, 'string'),
+      MessageGroupId: request.options?.messageGroupId,
+      MessageDeduplicationId: request.options?.messageDeduplicationId,
+      MessageAttributes: attributes,
+    })
+
+    await this.client.send(command)
   }
 
   public async sendBatchMessage<TMessage>(
     request: QueueBatchMessageRequest<TMessage, SNSMessageOptions>,
   ): Promise<void> {
-    const isPublishBatchSupported = this.client.publishBatch
-    if (!isPublishBatchSupported) {
-      const batchSendMessagePromises = request.messages.map((message) =>
-        this.sendMessage({ message, options: request.options }),
-      )
-
-      await Promise.all(batchSendMessagePromises)
-
-      return
-    }
-
     const attributes = request.options?.attributes
       ? SNSQueueClient.translateAttributesToSNSAttributes(
           request.options?.attributes,
@@ -106,12 +97,12 @@ class SNSQueueClient implements QueueClient {
       MessageAttributes: attributes,
     }))
 
-    await this.client
-      .publishBatch({
-        TopicArn: this.topicArn,
-        PublishBatchRequestEntries: batchSendMessageEntries,
-      })
-      .promise()
+    const command = new PublishBatchCommand({
+      TopicArn: this.topicArn,
+      PublishBatchRequestEntries: batchSendMessageEntries,
+    })
+
+    await this.client.send(command)
   }
 }
 
