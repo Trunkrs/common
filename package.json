@@ -18,11 +18,14 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.421.0",
     "@aws-sdk/client-eventbridge": "^3.421.0",
     "@aws-sdk/client-kinesis": "^3.421.0",
     "@aws-sdk/client-lambda": "^3.421.0",
     "@aws-sdk/client-sns": "^3.421.0",
     "@aws-sdk/client-sqs": "^3.421.0",
+    "@aws-sdk/util-dynamodb": "^3.421.0",
+    "@types/aws-lambda": "^8.10.122",
     "@types/faker": "^5.5.8",
     "@types/jest": "^27.0.1",
     "@types/joi": "^17.2.3",

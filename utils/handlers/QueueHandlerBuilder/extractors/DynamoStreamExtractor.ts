@@ -1,20 +1,23 @@
-import { DynamoDB } from 'aws-sdk'
-import { AttributeMap } from 'aws-sdk/clients/dynamodb'
+import type { DynamoDBStreamEvent } from 'aws-lambda'
+import type { AttributeValue } from '@aws-sdk/client-dynamodb'
 
-import { DynamoStreamRecord, MessageExtractor } from '../types'
+import { unmarshall } from '@aws-sdk/util-dynamodb'
 
-const DynamoStreamExtractor: MessageExtractor<
-  AWSLambda.DynamoDBStreamEvent,
-  any
-> = (event) => {
+import { MessageExtractor } from '../types'
+
+const DynamoStreamExtractor: MessageExtractor<DynamoDBStreamEvent, any> = (
+  event,
+) => {
   return event.Records.map((record) => {
     return {
       type: record.eventName,
-      data: DynamoDB.Converter.unmarshall(
-        (record.dynamodb?.NewImage ??
-          record.dynamodb?.OldImage) as AttributeMap,
+      data: unmarshall(
+        (record.dynamodb?.NewImage ?? record.dynamodb?.OldImage) as Record<
+          string,
+          AttributeValue
+        >,
       ),
-    } as DynamoStreamRecord
+    }
   })
 }
 
