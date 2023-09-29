@@ -1,3 +1,8 @@
+import {
+  EventBridgeClient as AWSEventBridgeClient,
+  PutEventsCommand,
+} from '@aws-sdk/client-eventbridge'
+
 import { Serializer } from '../../utils/serialization'
 
 import {
@@ -6,12 +11,9 @@ import {
   QueueBatchMessageRequest,
   QueueMessageRequest,
 } from './QueueClient'
-import getAWS from '../../utils/getAWS'
-
-const { EventBridge } = getAWS()
 
 class EventBridgeClient implements QueueClient {
-  private readonly client = new EventBridge()
+  private readonly client = new AWSEventBridgeClient()
 
   public constructor(
     /**
@@ -36,35 +38,35 @@ class EventBridgeClient implements QueueClient {
   public async sendMessage<TMessage>(
     request: QueueMessageRequest<TMessage, EventBridgeMessageOptions>,
   ): Promise<void> {
-    await this.client
-      .putEvents({
-        Entries: [
-          {
-            EventBusName: this.busName,
-            Source: this.sourceName,
-            DetailType: request.options?.detailType ?? this.detailType,
-            Detail: this.serializer.serialize(request.message, 'string'),
-            Resources: request.options?.resources,
-          },
-        ],
-      })
-      .promise()
+    const command = new PutEventsCommand({
+      Entries: [
+        {
+          EventBusName: this.busName,
+          Source: this.sourceName,
+          DetailType: request.options?.detailType ?? this.detailType,
+          Detail: this.serializer.serialize(request.message, 'string'),
+          Resources: request.options?.resources,
+        },
+      ],
+    })
+
+    await this.client.send(command)
   }
 
   public async sendBatchMessage<TMessage>(
     request: QueueBatchMessageRequest<TMessage, EventBridgeMessageOptions>,
   ): Promise<void> {
-    await this.client
-      .putEvents({
-        Entries: request.messages.map((message) => ({
-          EventBusName: this.busName,
-          Source: this.sourceName,
-          DetailType: request.options?.detailType ?? this.detailType,
-          Detail: this.serializer.serialize(message, 'string'),
-          Resources: request.options?.resources,
-        })),
-      })
-      .promise()
+    const command = new PutEventsCommand({
+      Entries: request.messages.map((message) => ({
+        EventBusName: this.busName,
+        Source: this.sourceName,
+        DetailType: request.options?.detailType ?? this.detailType,
+        Detail: this.serializer.serialize(message, 'string'),
+        Resources: request.options?.resources,
+      })),
+    })
+
+    await this.client.send(command)
   }
 }
 

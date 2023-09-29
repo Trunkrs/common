@@ -18,6 +18,7 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@aws-sdk/client-eventbridge": "^3.421.0",
     "@aws-sdk/client-kinesis": "^3.421.0",
     "@aws-sdk/client-sns": "^3.421.0",
     "@aws-sdk/client-sqs": "^3.421.0",
