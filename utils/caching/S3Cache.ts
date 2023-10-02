@@ -1,4 +1,14 @@
-import { AWSError, S3 } from 'aws-sdk'
+import {
+  NoSuchKey,
+  NoSuchBucket,
+  S3Client,
+  HeadObjectCommand,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  DeleteObjectsCommand,
+  ListObjectsV2Command,
+} from '@aws-sdk/client-s3'
 import { Metadata } from 'aws-sdk/clients/s3'
 
 import { Serializer } from '../serialization'
@@ -7,7 +17,7 @@ import Cache, { CacheItem } from './Cache'
 class S3Cache extends Cache {
   private readonly expirationTagName = 'cache-expiration'
 
-  private readonly s3Client = new S3()
+  private readonly s3Client = new S3Client()
 
   public constructor(
     private readonly serializer: Serializer,
@@ -24,21 +34,19 @@ class S3Cache extends Cache {
 
   public async hasKey(key: string): Promise<boolean> {
     try {
-      const meta = await this.s3Client
-        .headObject({
-          Bucket: this.bucketArn,
-          Key: this.getFullKey(key),
-        })
-        .promise()
+      const headObjectCommand = new HeadObjectCommand({
+        Bucket: this.bucketArn,
+        Key: this.getFullKey(key),
+      })
 
+      const meta = await this.s3Client.send(headObjectCommand)
       const { [this.expirationTagName]: expiration } = meta.Metadata as Metadata
 
       return this.isValidItem({
         expiration: new Date(Number(expiration)),
       } as CacheItem)
     } catch (error) {
-      const s3Error = error as AWSError
-      if (s3Error.statusCode === 404) {
+      if (error instanceof NoSuchKey || error instanceof NoSuchBucket) {
         return false
       }
 
@@ -49,16 +57,16 @@ class S3Cache extends Cache {
   public async add<TValue>(key: string, value: TValue): Promise<void> {
     const cacheItem = this.createItem(value)
 
-    await this.s3Client
-      .putObject({
-        Bucket: this.bucketArn,
-        Key: this.getFullKey(key),
-        Body: this.serializer.serialize(value, 'string'),
-        Metadata: {
-          [this.expirationTagName]: String(Number(cacheItem.expiration)),
-        },
-      })
-      .promise()
+    const putObjectCommand = new PutObjectCommand({
+      Bucket: this.bucketArn,
+      Key: this.getFullKey(key),
+      Body: this.serializer.serialize(value, 'string'),
+      Metadata: {
+        [this.expirationTagName]: String(Number(cacheItem.expiration)),
+      },
+    })
+
+    await this.s3Client.send(putObjectCommand)
   }
 
   public async get<TValue>(key: string): Promise<TValue | null> {
@@ -67,14 +75,20 @@ class S3Cache extends Cache {
       return null
     }
 
-    const object = await this.s3Client
-      .getObject({
-        Bucket: this.bucketArn,
-        Key: this.getFullKey(key),
-      })
-      .promise()
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: this.bucketArn,
+      Key: this.getFullKey(key),
+    })
 
-    return this.serializer.deserialize<TValue>(object.Body as Buffer)
+    const object = await this.s3Client.send(getObjectCommand)
+
+    if (!object.Body) {
+      return null
+    }
+
+    return this.serializer.deserialize<TValue>(
+      Buffer.from(await object.Body.transformToByteArray()),
+    )
   }
 
   public async getOrAdd<TValue>(
@@ -93,41 +107,40 @@ class S3Cache extends Cache {
 
   public async remove(key: string): Promise<void> {
     try {
-      await this.s3Client
-        .deleteObject({
-          Bucket: this.bucketArn,
-          Key: this.getFullKey(key),
-        })
-        .promise()
+      const command = new DeleteObjectCommand({
+        Bucket: this.bucketArn,
+        Key: this.getFullKey(key),
+      })
+
+      await this.s3Client.send(command)
     } catch (error) {
-      const s3Error = error as AWSError
-      if (s3Error.statusCode !== 404) {
+      if (error instanceof NoSuchKey || error instanceof NoSuchBucket) {
         throw error
       }
     }
   }
 
   public async clear(): Promise<void> {
-    const bucketItems = await this.s3Client
-      .listObjectsV2({
-        Bucket: this.bucketArn,
-      })
-      .promise()
+    const command = new ListObjectsV2Command({
+      Bucket: this.bucketArn,
+    })
+
+    const bucketItems = await this.s3Client.send(command)
 
     if (!bucketItems.Contents || !bucketItems.Contents.length) {
       return
     }
 
-    await this.s3Client
-      .deleteObjects({
-        Bucket: this.bucketArn,
-        Delete: {
-          Objects: bucketItems.Contents.map((bucketObject) => ({
-            Key: bucketObject.Key as string,
-          })),
-        },
-      })
-      .promise()
+    const deleteObjectsCommand = new DeleteObjectsCommand({
+      Bucket: this.bucketArn,
+      Delete: {
+        Objects: bucketItems.Contents.map((bucketObject) => ({
+          Key: bucketObject.Key as string,
+        })),
+      },
+    })
+
+    await this.s3Client.send(deleteObjectsCommand)
   }
 }
 

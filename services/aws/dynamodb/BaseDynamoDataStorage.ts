@@ -1,23 +1,27 @@
 /* eslint-disable no-await-in-loop */
-import AWS from 'aws-sdk'
-import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
-import PaginatedFindResult from './interfaces/PaginatedFindResult'
-import getAWS from '../../../utils/getAWS'
 
-const { DynamoDB } = getAWS()
+import {
+  DynamoDBDocumentClient,
+  QueryCommand,
+  QueryCommandInput,
+  QueryCommandOutput,
+  ScanCommandInput,
+  ScanCommandOutput,
+} from '@aws-sdk/lib-dynamodb'
+import { DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb'
+import PaginatedFindResult from './interfaces/PaginatedFindResult'
 
 abstract class BaseDynamoDataStorage<TEntity> {
   protected abstract readonly keys: Array<keyof TEntity>
 
-  protected readonly documentClient: AWS.DynamoDB.DocumentClient
+  protected readonly documentClient: DynamoDBDocumentClient
 
   protected constructor(protected readonly tableName: string) {
-    this.documentClient = new DynamoDB.DocumentClient()
+    this.documentClient = DynamoDBDocumentClient.from(new DynamoDBClient())
   }
 
-  protected async executeOperation<TResultEntity = TEntity>(
-    operation: 'Scan' | 'Query',
-    query: AWS.DynamoDB.DocumentClient.ScanInput,
+  protected async executeQuery<TResultEntity = TEntity>(
+    query: QueryCommandInput,
   ): Promise<TResultEntity[]> {
     const results = []
     let lastEvaluatedKey
@@ -25,15 +29,12 @@ abstract class BaseDynamoDataStorage<TEntity> {
     console.log('DDB Op', query)
 
     do {
-      const page: DocumentClient.QueryOutput =
-        operation === 'Scan'
-          ? await this.documentClient
-              .scan({ ...query, ExclusiveStartKey: lastEvaluatedKey })
-              .promise()
-          : await this.documentClient
-              .query({ ...query, ExclusiveStartKey: lastEvaluatedKey })
-              .promise()
+      const command = new QueryCommand({
+        ...query,
+        ExclusiveStartKey: lastEvaluatedKey,
+      })
 
+      const page: QueryCommandOutput = await this.documentClient.send(command)
       if (page.Items?.length) {
         results.push(...page.Items)
       }
@@ -44,53 +45,87 @@ abstract class BaseDynamoDataStorage<TEntity> {
     return results as TResultEntity[]
   }
 
-  protected async executePaginatedOperation<TResultEntity = TEntity>(
-    operation: 'Scan' | 'Query',
-    query: AWS.DynamoDB.DocumentClient.ScanInput,
-    lastEvaluatedKey?: string
-  ): Promise<PaginatedFindResult<TResultEntity>> {
+  protected async executeScan<TResultEntity = TEntity>(
+    query: ScanCommandInput,
+  ): Promise<TResultEntity[]> {
     const results = []
+    let lastEvaluatedKey
+
     console.log('DDB Op', query)
-    let decodedLastEvaluatedKey: AWS.DynamoDB.Key | undefined
 
-    if (lastEvaluatedKey) {
-      decodedLastEvaluatedKey = JSON.parse(
-        Buffer
-          .from(lastEvaluatedKey, 'base64')
-          .toString('utf-8')
-      )
-    }
+    do {
+      const command = new ScanCommand({
+        ...query,
+        ExclusiveStartKey: lastEvaluatedKey,
+      })
 
-    const page: DocumentClient.QueryOutput =
-      operation === 'Scan'
-        ? await this.documentClient
-          .scan({
-            ...query,
-            ExclusiveStartKey: decodedLastEvaluatedKey,
-          })
-          .promise()
-        : await this.documentClient
-          .query({
-            ...query,
-            ExclusiveStartKey: decodedLastEvaluatedKey,
-          })
-          .promise()
+      const page: ScanCommandOutput = await this.documentClient.send(command)
+      if (page.Items?.length) {
+        results.push(...page.Items)
+      }
 
-    if (page.Items?.length) {
-      results.push(...page.Items)
-    }
+      lastEvaluatedKey = page.LastEvaluatedKey
+    } while (lastEvaluatedKey)
 
-    let newLastEvaluatedKey: string | undefined
-    if (page.LastEvaluatedKey) {
-      newLastEvaluatedKey = Buffer
-        .from(
+    return results as TResultEntity[]
+  }
+
+  protected async executePaginatedQuery<TResultEntity = TEntity>(
+    query: QueryCommandInput,
+    lastEvaluatedKey?: string,
+  ): Promise<PaginatedFindResult<TResultEntity>> {
+    const decodedLastEvaluatedKey: Record<string, any> | undefined =
+      lastEvaluatedKey
+        ? JSON.parse(Buffer.from(lastEvaluatedKey, 'base64').toString('utf-8'))
+        : undefined
+
+    const command = new QueryCommand({
+      ...query,
+      ExclusiveStartKey: decodedLastEvaluatedKey,
+    })
+
+    const page = await this.documentClient.send(command)
+
+    const items = (page.Items as TResultEntity[]) || []
+    const newLastEvaluatedKey = page.LastEvaluatedKey
+      ? Buffer.from(
           JSON.stringify(page.LastEvaluatedKey, null, 2),
           'utf-8',
         ).toString('base64')
-    }
+      : undefined
 
     return {
-      items: results as TResultEntity[],
+      items,
+      lastEvaluatedKey: newLastEvaluatedKey,
+    }
+  }
+
+  protected async executePaginatedScan<TResultEntity = TEntity>(
+    query: ScanCommandInput,
+    lastEvaluatedKey?: string,
+  ): Promise<PaginatedFindResult<TResultEntity>> {
+    const decodedLastEvaluatedKey: Record<string, any> | undefined =
+      lastEvaluatedKey
+        ? JSON.parse(Buffer.from(lastEvaluatedKey, 'base64').toString('utf-8'))
+        : undefined
+
+    const command = new ScanCommand({
+      ...query,
+      ExclusiveStartKey: decodedLastEvaluatedKey,
+    })
+
+    const page = await this.documentClient.send(command)
+
+    const items = (page.Items as unknown as TResultEntity[]) || []
+    const newLastEvaluatedKey = page.LastEvaluatedKey
+      ? Buffer.from(
+          JSON.stringify(page.LastEvaluatedKey, null, 2),
+          'utf-8',
+        ).toString('base64')
+      : undefined
+
+    return {
+      items,
       lastEvaluatedKey: newLastEvaluatedKey,
     }
   }

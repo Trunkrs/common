@@ -1,6 +1,6 @@
 import { createTransport } from 'nodemailer'
 import * as Mail from 'nodemailer/lib/mailer'
-import { SES } from 'aws-sdk'
+import { SESClient } from '@aws-sdk/client-ses'
 import ServiceProvider, { Lifecycle } from '../utils/service-provider'
 import { RecipientValidationConfig } from '../services/email/EmailClient/models'
 import awsProvider from './aws'
@@ -31,6 +31,8 @@ export const SesNodemailerClient = ServiceProvider.createSymbol<EmailClient>(
   'SesNodemailerClient',
 )
 
+export const SESClientSymbol =
+  ServiceProvider.createSymbol<SESClient>('SESClient')
 export const TemplateFileCache =
   ServiceProvider.createSymbol<Cache>('TemplateCache')
 
@@ -41,7 +43,7 @@ export const configureEmailClients = (
 
   serviceProvider.register(NodemailerClient, Lifecycle.Singleton, () =>
     createTransport({
-      SES: awsProvider.provide(SES),
+      SES: awsProvider.provide(SESClientSymbol),
     }),
   )
 
@@ -58,10 +60,10 @@ export const configureEmailClients = (
   )
 
   awsProvider.register(
-    SES,
+    SESClientSymbol,
     Lifecycle.Singleton,
     () =>
-      new SES({
+      new SESClient({
         region: request.sesRegion,
       }),
   )
@@ -71,7 +73,7 @@ export const configureEmailClients = (
     Lifecycle.Singleton,
     () =>
       new SESTemplateClient(
-        awsProvider.provide(SES),
+        awsProvider.provide(SESClientSymbol),
         serviceProvider.provide(TemplateFileCache),
       ),
   )
