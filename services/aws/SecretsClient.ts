@@ -1,18 +1,21 @@
-import Cache from '../../utils/caching/Cache'
-import getAWS from '../../utils/getAWS'
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+  PutSecretValueCommand,
+} from '@aws-sdk/client-secrets-manager'
 
-const { SecretsManager } = getAWS()
+import Cache from '../../utils/caching/Cache'
 
 class SecretsClient {
-  private readonly secretsManager = new SecretsManager()
+  private readonly secretsManager = new SecretsManagerClient()
 
   public constructor(private readonly cache?: Cache) {}
 
   public async getSecretValue(secretName: string): Promise<string | undefined> {
     const getSecret = async () => {
-      const secret = await this.secretsManager
-        .getSecretValue({ SecretId: secretName })
-        .promise()
+      const command = new GetSecretValueCommand({ SecretId: secretName })
+
+      const secret = await this.secretsManager.send(command)
 
       return secret.SecretString
     }
@@ -33,12 +36,12 @@ class SecretsClient {
     secretName: string,
     secretValue: string,
   ): Promise<void> {
-    await this.secretsManager
-      .putSecretValue({
-        SecretId: secretName,
-        SecretString: secretValue,
-      })
-      .promise()
+    const command = new PutSecretValueCommand({
+      SecretId: secretName,
+      SecretString: secretValue,
+    })
+
+    await this.secretsManager.send(command)
 
     if (this.cache) {
       const isCacheNotEmpty = await this.cache.hasKey(secretName)
