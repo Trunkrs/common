@@ -1,21 +1,30 @@
 import { name, company } from 'faker'
-import { SES } from 'aws-sdk'
+import { GetTemplateCommand, SESClient } from '@aws-sdk/client-ses'
+import { mockClient } from 'aws-sdk-client-mock'
+
 import { SESTemplateClient } from '..'
 import { Cache } from '../../../utils/caching'
 
-const createMockCache = () => ({
-  get: jest.fn(),
-  add: jest.fn(),
-})
-
-const createMockSES = () => ({
-  getTemplate: jest.fn(),
-})
+function createMockCache() {
+  return {
+    get: jest.fn(),
+    add: jest.fn(),
+  }
+}
 
 describe('SESTemplateClient', () => {
   let mockCache: ReturnType<typeof createMockCache>
-  let mockSES: ReturnType<typeof createMockSES>
+  const mockSES = mockClient(SESClient)
   let sut: SESTemplateClient
+
+  beforeEach(() => {
+    mockSES.reset()
+    mockCache = createMockCache()
+    sut = new SESTemplateClient(
+      mockSES as unknown as SESClient,
+      mockCache as unknown as Cache,
+    )
+  })
 
   describe('createEmailFromTemplate', () => {
     mockCache = createMockCache()
@@ -40,15 +49,7 @@ describe('SESTemplateClient', () => {
     }
 
     it('Should create valid email content from an SES template', async () => {
-      mockSES = createMockSES()
-      mockSES.getTemplate.mockImplementation(() => ({
-        promise: jest.fn().mockResolvedValue(sesTemplate),
-      }))
-
-      sut = new SESTemplateClient(
-        mockSES as unknown as SES,
-        mockCache as unknown as Cache,
-      )
+      mockSES.on(GetTemplateCommand).resolves(sesTemplate)
 
       const email = await sut.createEmailFromTemplate(
         templateName,
