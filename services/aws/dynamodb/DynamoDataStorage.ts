@@ -1,27 +1,23 @@
 import {
-  DynamoDBDocumentClient,
   BatchWriteCommand,
   PutCommand,
   GetCommand,
   DeleteCommand,
-  QueryCommand,
-  ScanCommand,
   BatchWriteCommandInput,
   BatchWriteCommandOutput,
-  BatchGetCommandInput,
   BatchGetCommand,
 } from '@aws-sdk/lib-dynamodb'
 
 import { PrimaryKey, QueryBuilder, QueryParameters } from './utils'
 import BaseDynamoDataStorage from './BaseDynamoDataStorage'
-import DataStorage from './interfaces/DataStorage'
 import BatchSizeTooBigError from './BatchSizeTooBigError'
 import PaginatedFindResult from './interfaces/PaginatedFindResult'
 import WriteRequest from './types/WriteRequest'
+import QueryableDataStorage from './interfaces/QueryableDataStorage'
 
 abstract class DynamoDataStorage<TEntity>
   extends BaseDynamoDataStorage<TEntity>
-  implements DataStorage<TEntity>
+  implements QueryableDataStorage<TEntity>
 {
   protected constructor(tableName: string) {
     super(tableName)
@@ -120,7 +116,7 @@ abstract class DynamoDataStorage<TEntity>
     }, [])
   }
 
-  public async query<TResultEntity = TEntity>(
+  public query<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
   ): Promise<TResultEntity[]> {
     const builderParams = {
@@ -131,11 +127,10 @@ abstract class DynamoDataStorage<TEntity>
 
     const ddbQuery = QueryBuilder.buildQuery(builderParams)
 
-    const result = await this.executeQuery<TResultEntity>(ddbQuery)
-    return result
+    return this.executeQuery<TResultEntity>(ddbQuery)
   }
 
-  public async scan<TResultEntity = TEntity>(
+  public scan<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
   ): Promise<TResultEntity[]> {
     const builderParams = {
@@ -146,11 +141,10 @@ abstract class DynamoDataStorage<TEntity>
 
     const ddbQuery = QueryBuilder.buildScan(builderParams)
 
-    const result = await this.executeScan<TResultEntity>(ddbQuery)
-    return result
+    return this.executeScan<TResultEntity>(ddbQuery)
   }
 
-  public async queryPaginated<TResultEntity = TEntity>(
+  public queryForPage<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
     lastEvaluatedKey?: string,
   ): Promise<PaginatedFindResult<TResultEntity>> {
@@ -161,15 +155,11 @@ abstract class DynamoDataStorage<TEntity>
     }
 
     const ddbQuery = QueryBuilder.buildQuery(builderParams)
-    const result = await this.executePaginatedQuery<TResultEntity>(
-      ddbQuery,
-      lastEvaluatedKey,
-    )
 
-    return result
+    return this.executePaginatedQuery<TResultEntity>(ddbQuery, lastEvaluatedKey)
   }
 
-  public async scanPaginated<TResultEntity = TEntity>(
+  public scanForPage<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
     lastEvaluatedKey?: string,
   ): Promise<PaginatedFindResult<TResultEntity>> {
@@ -180,12 +170,8 @@ abstract class DynamoDataStorage<TEntity>
     }
 
     const ddbQuery = QueryBuilder.buildScan(builderParams)
-    const result = await this.executePaginatedScan<TResultEntity>(
-      ddbQuery,
-      lastEvaluatedKey,
-    )
 
-    return result
+    return this.executePaginatedScan<TResultEntity>(ddbQuery, lastEvaluatedKey)
   }
 
   public async findOne(

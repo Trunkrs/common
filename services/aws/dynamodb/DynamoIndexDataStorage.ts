@@ -3,6 +3,8 @@ import { QueryBuilder, QueryParameters } from './utils'
 import QueryableDataStorage from './interfaces/QueryableDataStorage'
 import PaginatedFindResult from './interfaces/PaginatedFindResult'
 
+type NewType<TResultEntity> = TResultEntity
+
 abstract class DynamoIndexDataStorage<TEntity>
   extends BaseDynamoDataStorage<TEntity>
   implements QueryableDataStorage<TEntity>
@@ -14,10 +16,9 @@ abstract class DynamoIndexDataStorage<TEntity>
     super(tableName)
   }
 
-  public async find<TResultEntity = TEntity>(
+  public query<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
   ): Promise<TResultEntity[]> {
-    const queryOp = query.queryOptions?.operation ?? 'Query'
     const builderParams = {
       query,
       tableName: this.tableName,
@@ -25,20 +26,15 @@ abstract class DynamoIndexDataStorage<TEntity>
       indexName: this.indexName,
     }
 
-    const ddbQuery =
-      queryOp === 'Scan'
-        ? QueryBuilder.buildScan(builderParams)
-        : QueryBuilder.buildQuery(builderParams)
+    const ddbQuery = QueryBuilder.buildQuery(builderParams)
 
-    const result = await this.executeOperation<TResultEntity>(queryOp, ddbQuery)
-    return result
+    return this.executeQuery<TResultEntity>(ddbQuery)
   }
 
-  public async paginatedFind<TResultEntity = TEntity>(
+  public queryForPage<TResultEntity = TEntity>(
     query: QueryParameters<TEntity>,
     lastEvaluatedKey?: string,
   ): Promise<PaginatedFindResult<TResultEntity>> {
-    const queryOp = query.queryOptions?.operation ?? 'Query'
     const builderParams = {
       query,
       tableName: this.tableName,
@@ -46,18 +42,40 @@ abstract class DynamoIndexDataStorage<TEntity>
       indexName: this.indexName,
     }
 
-    const ddbQuery =
-      queryOp === 'Scan'
-        ? QueryBuilder.buildScan(builderParams)
-        : QueryBuilder.buildQuery(builderParams)
+    const ddbQuery = QueryBuilder.buildQuery(builderParams)
 
-    const result = await this.executePaginatedOperation<TResultEntity>(
-      queryOp,
-      ddbQuery,
-      lastEvaluatedKey,
-    )
+    return this.executePaginatedQuery<TResultEntity>(ddbQuery, lastEvaluatedKey)
+  }
 
-    return result
+  public scan<TResultEntity = TEntity>(
+    query: QueryParameters<TEntity>,
+  ): Promise<NewType<TResultEntity>[]> {
+    const builderParams = {
+      query,
+      tableName: this.tableName,
+      primaryKeys: this.keys,
+      indexName: this.indexName,
+    }
+
+    const ddbQuery = QueryBuilder.buildScan(builderParams)
+
+    return this.executeScan<TResultEntity>(ddbQuery)
+  }
+
+  public scanForPage<TResultEntity = TEntity>(
+    query: QueryParameters<TEntity>,
+    lastEvaluatedKey?: string,
+  ): Promise<PaginatedFindResult<TResultEntity>> {
+    const builderParams = {
+      query,
+      tableName: this.tableName,
+      primaryKeys: this.keys,
+      indexName: this.indexName,
+    }
+
+    const ddbQuery = QueryBuilder.buildScan(builderParams)
+
+    return this.executePaginatedScan<TResultEntity>(ddbQuery, lastEvaluatedKey)
   }
 
   public async findOne(
@@ -68,7 +86,7 @@ abstract class DynamoIndexDataStorage<TEntity>
       limit: 1,
     }
 
-    const [result] = await this.find(limitedQuery)
+    const [result] = await this.query(limitedQuery)
     return result ?? null
   }
 }
