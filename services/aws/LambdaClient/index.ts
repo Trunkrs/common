@@ -26,7 +26,10 @@ class LambdaClient<TResponse = unknown, TInvokeArgs = unknown> {
     const result = await this.lambdaInstance.send(command)
 
     if (result.FunctionError) {
-      throw new LambdaInvocationFailedError(result.FunctionError)
+      throw new LambdaInvocationFailedError(
+        result.LogResult as string,
+        result.FunctionError,
+      )
     }
 
     if (!result.Payload) {

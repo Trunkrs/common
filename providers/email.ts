@@ -1,6 +1,7 @@
 import { createTransport } from 'nodemailer'
 import * as Mail from 'nodemailer/lib/mailer'
 import { SESClient } from '@aws-sdk/client-ses'
+
 import ServiceProvider, { Lifecycle } from '../utils/service-provider'
 import { RecipientValidationConfig } from '../services/email/EmailClient/models'
 import awsProvider from './aws'
