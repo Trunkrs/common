@@ -1,6 +1,6 @@
 {
   "name": "@trunkrs/common",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "Common standards library for development in Trunkrs",
   "types": "./index.d.ts",
   "repository": "https://github.com/Trunkrs/common.git",
