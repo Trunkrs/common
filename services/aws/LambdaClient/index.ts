@@ -1,3 +1,8 @@
+import {
+  LambdaClient as AWSLambdaClient,
+  InvokeCommand,
+} from '@aws-sdk/client-lambda'
+
 import { Serializer } from '../../../utils/serialization'
 import LambdaInvocationFailedError from './LambdaInvocationFailedError'
 
@@ -5,22 +10,26 @@ class LambdaClient<TResponse = unknown, TInvokeArgs = unknown> {
   public constructor(
     protected readonly functionArn: string,
     protected readonly serializer: Serializer,
-    protected readonly lambdaInstance: AWS.Lambda
+    protected readonly lambdaInstance: AWSLambdaClient,
   ) {}
 
   public async invokeLambda(args?: TInvokeArgs): Promise<TResponse | void> {
-    const serializedInput = !!args
+    const serializedInput = args
       ? this.serializer.serialize(args, 'string')
       : undefined
 
-    const result = await this.lambdaInstance.invoke({
+    const command = new InvokeCommand({
       Payload: serializedInput,
       FunctionName: this.functionArn,
-    }).promise()
+    })
 
+    const result = await this.lambdaInstance.send(command)
 
     if (result.FunctionError) {
-      throw new LambdaInvocationFailedError(result.FunctionError)
+      throw new LambdaInvocationFailedError(
+        result.LogResult as string,
+        result.FunctionError,
+      )
     }
 
     if (!result.Payload) {
@@ -28,7 +37,7 @@ class LambdaClient<TResponse = unknown, TInvokeArgs = unknown> {
     }
 
     const deserializedResult = this.serializer.deserialize<TResponse>(
-      Buffer.from(result.Payload as string)
+      Buffer.from(result.Payload),
     )
 
     return deserializedResult

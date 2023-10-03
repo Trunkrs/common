@@ -1,7 +1,6 @@
-import { DynamoDB } from 'aws-sdk'
+import { ScanCommandInput, QueryCommandInput } from '@aws-sdk/lib-dynamodb'
 
 import DynamoOperator from '../operators/DynamoOperator'
-
 import WhereParameters from './QueryWhereStatement'
 import QueryParameters from './QueryParameters'
 
@@ -119,7 +118,7 @@ class QueryBuilder {
     query,
     tableName,
     indexName,
-  }: QueryBuilderParams<TEntity>): DynamoDB.DocumentClient.ScanInput {
+  }: QueryBuilderParams<TEntity>): ScanCommandInput {
     const { where, limit, select, orderDescending } = query
 
     if (orderDescending) {
@@ -128,7 +127,7 @@ class QueryBuilder {
       )
     }
 
-    const op: DynamoDB.DocumentClient.ScanInput = {
+    const op: ScanCommandInput = {
       TableName: tableName,
       IndexName: indexName,
       Limit: limit,
@@ -154,7 +153,7 @@ class QueryBuilder {
     primaryKeys,
     tableName,
     indexName,
-  }: QueryBuilderParams<TEntity>): DynamoDB.DocumentClient.QueryInput {
+  }: QueryBuilderParams<TEntity>): QueryCommandInput {
     const { where, limit, select, orderDescending } = query
 
     if (!where || !Object.values(where).length) {
@@ -167,7 +166,7 @@ class QueryBuilder {
       primaryKeys,
     )
 
-    const op: DynamoDB.DocumentClient.QueryInput = {
+    const op: QueryCommandInput = {
       TableName: tableName,
       IndexName: indexName,
       Limit: limit,

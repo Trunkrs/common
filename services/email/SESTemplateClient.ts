@@ -1,13 +1,20 @@
+import {
+  SESClient,
+  GetTemplateCommand,
+  Template as SESTemplate,
+} from '@aws-sdk/client-ses'
+
 import Template from '../../models/email/Template'
 import EmailContent from '../../models/email/EmailContent'
-
 import TemplateClient from './TemplateClient'
-import {SES} from 'aws-sdk'
-import {Cache} from '../../utils/caching'
+import { Cache } from '../../utils/caching'
 import TemplateNotFoundError from '../../models/errors/email/TemplateNotFoundError'
 
 class SESTemplateClient extends TemplateClient {
-  constructor(private readonly sesClient: SES, private readonly cache: Cache) {
+  constructor(
+    private readonly sesClient: SESClient,
+    private readonly cache: Cache,
+  ) {
     super()
   }
 
@@ -74,9 +81,11 @@ class SESTemplateClient extends TemplateClient {
   private async moveSesTemplateToCache(
     templateName: string,
   ): Promise<Template> {
-    const { Template: sesTemplate } = await this.sesClient
-      .getTemplate({ TemplateName: templateName })
-      .promise()
+    const command = new GetTemplateCommand({
+      TemplateName: templateName,
+    })
+
+    const { Template: sesTemplate } = await this.sesClient.send(command)
 
     if (!sesTemplate) {
       throw new TemplateNotFoundError(templateName)
@@ -90,9 +99,9 @@ class SESTemplateClient extends TemplateClient {
     return template
   }
 
-  private static sesTemplateToTemplate(sesTemplate: SES.Template): Template {
+  private static sesTemplateToTemplate(sesTemplate: SESTemplate): Template {
     return {
-      name: sesTemplate.TemplateName,
+      name: sesTemplate.TemplateName as string,
       subject: sesTemplate.SubjectPart,
       text: sesTemplate.TextPart,
       html: sesTemplate.HtmlPart,

@@ -1,4 +1,11 @@
-import { SSM } from 'aws-sdk'
+import {
+  SSMClient,
+  PutParameterCommand,
+  GetParameterCommand,
+  GetParametersByPathCommand,
+  DeleteParameterCommand,
+  DeleteParametersCommand,
+} from '@aws-sdk/client-ssm'
 import addSeconds from 'date-fns/addSeconds'
 
 import Logger from '../logging/Logger'
@@ -7,7 +14,7 @@ import { CacheItem } from './Cache'
 import GlobalAtomicCache from './GlobalAtomicCache'
 
 class SecretCache extends GlobalAtomicCache {
-  private readonly ssmClient = new SSM()
+  private readonly ssmClient = new SSMClient()
 
   public constructor(
     storeName: string,
@@ -33,15 +40,15 @@ class SecretCache extends GlobalAtomicCache {
 
     this.logger.info('[SecretCache] - Saving SSM Parameter', key, value)
 
-    await this.ssmClient
-      .putParameter({
-        Name: this.getFullParameterName(key),
-        Type: 'SecureString',
-        Policies: JSON.stringify(expirationPolicy),
-        Value: JSON.stringify(secret.value),
-        Tier: 'Advanced',
-      })
-      .promise()
+    const command = new PutParameterCommand({
+      Name: this.getFullParameterName(key),
+      Type: 'SecureString',
+      Policies: JSON.stringify(expirationPolicy),
+      Value: JSON.stringify(secret.value),
+      Tier: 'Advanced',
+    })
+
+    await this.ssmClient.send(command)
 
     this.logger.info('SSM parameter saved!')
   }
@@ -51,12 +58,13 @@ class SecretCache extends GlobalAtomicCache {
       this.logger.info('[SecretCache] - Fetching parameter', {
         name: this.getFullParameterName(key),
       })
-      const parameter = await this.ssmClient
-        .getParameter({
-          Name: this.getFullParameterName(key),
-          WithDecryption: true,
-        })
-        .promise()
+
+      const command = new GetParameterCommand({
+        Name: this.getFullParameterName(key),
+        WithDecryption: true,
+      })
+
+      const parameter = await this.ssmClient.send(command)
 
       this.logger.info('[SecretCache] - Fetched parameter', {
         parameter: parameter?.Parameter,
@@ -75,24 +83,27 @@ class SecretCache extends GlobalAtomicCache {
   }
 
   public async clear(): Promise<void> {
-    const { Parameters: parameters } = await this.ssmClient
-      .getParametersByPath({
-        Path: `/portal-cache/${this.storeName}`,
-      })
-      .promise()
+    const getParametersByPathCommand = new GetParametersByPathCommand({
+      Path: `/portal-cache/${this.storeName}`,
+    })
+
+    const { Parameters: parameters } = await this.ssmClient.send(
+      getParametersByPathCommand,
+    )
 
     if (!parameters) {
       return
     }
+
     const names = parameters
       .map((param) => param.Name || '')
       .filter((param) => !!param)
 
-    await this.ssmClient
-      .deleteParameters({
-        Names: names,
-      })
-      .promise()
+    const deleteParametersCommand = new DeleteParametersCommand({
+      Names: names,
+    })
+
+    await this.ssmClient.send(deleteParametersCommand)
   }
 
   public async hasKey(key: string): Promise<boolean> {
@@ -102,11 +113,9 @@ class SecretCache extends GlobalAtomicCache {
   }
 
   public async remove(key: string): Promise<void> {
-    await this.ssmClient
-      .deleteParameter({
-        Name: this.getFullParameterName(key),
-      })
-      .promise()
+    const command = new DeleteParameterCommand({
+      Name: this.getFullParameterName(key),
+    })
   }
 
   private getFullParameterName(key: string): string {

@@ -1,7 +1,16 @@
 /* eslint-disable @typescript-eslint/no-var-requires,global-require */
-import XRay, { Subsegment, SegmentLike } from 'aws-xray-sdk'
-import XRayCore from 'aws-xray-sdk-core'
-import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'http'
+import {
+  getSegment,
+  utils,
+  middleware,
+  SegmentLike,
+  captureHTTPsGlobal,
+  capturePromise,
+  setContextMissingStrategy,
+  captureAsyncFunc,
+  Subsegment,
+} from 'aws-xray-sdk-core'
+import { IncomingHttpHeaders, IncomingMessage } from 'http'
 import { MiddlewareLayer } from './handlers/HttpHandlerBuilder/types'
 
 class Tracing {
@@ -26,7 +35,7 @@ class Tracing {
 
   public static get current(): SegmentLike | undefined {
     if (!Tracing.stack.length) {
-      return XRay.getSegment()
+      return getSegment()
     }
 
     return Tracing.stack[Tracing.stack.length - 1]
@@ -34,15 +43,15 @@ class Tracing {
 
   public static prepare(defaultName?: string): void {
     try {
-      XRay.setContextMissingStrategy('LOG_ERROR')
+      setContextMissingStrategy('LOG_ERROR')
 
       if (defaultName) {
-        XRayCore.middleware.setDefaultName(defaultName)
+        middleware.setDefaultName(defaultName)
       }
 
-      XRay.captureHTTPsGlobal(require('http'))
-      XRay.captureHTTPsGlobal(require('https'))
-      XRay.capturePromise()
+      captureHTTPsGlobal(require('http'))
+      captureHTTPsGlobal(require('https'))
+      capturePromise()
     } catch (error) {
       console.warn(`[Tracing]: ${(error as Error).message}`)
     }
@@ -72,7 +81,7 @@ class Tracing {
       },
     } as unknown as IncomingMessage
 
-    return XRay.captureAsyncFunc(
+    return captureAsyncFunc(
       `${mimickedRequest.method} ${mimickedRequest.url}`,
       async (subsegment) => {
         try {
@@ -94,7 +103,7 @@ class Tracing {
           if (response.statusCode === 429) {
             subsegment.addThrottleFlag()
           }
-          const cause = XRayCore.utils.getCauseTypeFromHttpStatus(
+          const cause = utils.getCauseTypeFromHttpStatus(
             response.statusCode as number,
           )
 
@@ -171,7 +180,7 @@ class Tracing {
     parent?: SegmentLike,
   ): (...args: TArgs) => Promise<TResult> {
     return (...args: TArgs) =>
-      XRay.captureAsyncFunc(methodName, (subsegment) => {
+      captureAsyncFunc(methodName, (subsegment) => {
         return fn(...args)
           .then((result) => {
             subsegment?.close()
