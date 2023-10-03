@@ -1,10 +1,9 @@
-import StateMachineClient from './StateMachineClient'
-import getAWS from '../../utils/getAWS'
+import { SFNClient, StartExecutionCommand } from '@aws-sdk/client-sfn'
 
-const { StepFunctions } = getAWS()
+import StateMachineClient from './StateMachineClient'
 
 class StepFunctionsClient implements StateMachineClient {
-  private readonly client = new StepFunctions()
+  private readonly client = new SFNClient()
 
   public constructor(private readonly stateMachineArn: string) {}
 
@@ -13,12 +12,12 @@ class StepFunctionsClient implements StateMachineClient {
   ): Promise<void> {
     const requestInput = input ? JSON.stringify(input) : undefined
 
-    await this.client
-      .startExecution({
-        stateMachineArn: this.stateMachineArn,
-        input: requestInput,
-      })
-      .promise()
+    const command = new StartExecutionCommand({
+      stateMachineArn: this.stateMachineArn,
+      input: requestInput,
+    })
+
+    await this.client.send(command)
   }
 }
 
