@@ -3,8 +3,6 @@ import {
   NoProviderError,
 } from '../../../models/errors/handlers'
 
-import Tracing from '../../tracing'
-
 import SNSExtractor from './extractors/SNSExtractor'
 import SQSExtractor from './extractors/SQSExtractor'
 import EventBridgeExtractor from './extractors/EventBridgeExtractor'
@@ -122,8 +120,6 @@ class QueueHandlerBuilder<
       context: AWSLambda.Context,
       callback: AWSLambda.Callback,
     ): Promise<unknown> => {
-      Tracing.prepare()
-
       const queueEvent = this.messageExtractor(event, this.#parseJSON)
       const instance = ControllerFactory.provide<any>(
         this.controller as Constructor<TController>,

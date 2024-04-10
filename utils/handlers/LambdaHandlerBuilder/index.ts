@@ -3,7 +3,6 @@ import {
   NoProviderError,
 } from '../../../models/errors/handlers'
 import ServiceProvider, { Constructor } from '../../service-provider'
-import Tracing from '../../tracing'
 
 import ControllerFactory from '../../controllers/ControllerFactory'
 
@@ -78,8 +77,6 @@ class LambdaHandlerBuilder<TBody, TController> {
       context: AWSLambda.Context,
       callback: AWSLambda.Callback,
     ): Promise<unknown> => {
-      Tracing.prepare()
-
       const instance = ControllerFactory.provide<any>(
         this.controller as Constructor<TController>,
       )

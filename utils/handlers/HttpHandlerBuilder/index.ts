@@ -11,7 +11,6 @@ import { Serializer } from '../../serialization'
 import HttpControllerFactory, {
   ActionExecutionInput,
 } from '../../controllers/HttpControllerFactory'
-import Tracing from '../../tracing'
 
 import {
   HTTPLambdaHandler,
@@ -132,26 +131,25 @@ class HttpHandlerBuilder<TContext, TInput> {
 
     return async (
       event: AWSLambda.APIGatewayProxyEventV2,
-    ): Promise<AWSLambda.APIGatewayProxyResultV2> =>
-      Tracing.hookRequestCycle(event, async () => {
-        try {
-          const convertedEvent = await this.proxyEventToActionInput(event)
-          const [method, route] = this.extractActionInfo(event)
+    ): Promise<AWSLambda.APIGatewayProxyResultV2> => {
+      try {
+        const convertedEvent = await this.proxyEventToActionInput(event)
+        const [method, route] = this.extractActionInfo(event)
 
-          const result = await HttpControllerFactory.executeAction<
-            HTTPResult | undefined
-          >(method, route, convertedEvent)
+        const result = await HttpControllerFactory.executeAction<
+          HTTPResult | undefined
+        >(method, route, convertedEvent)
 
-          if (!result) {
-            return this.formatSuccessResult(204)
-          }
-
-          const { statusCode, body, headers } = result
-          return this.formatSuccessResult(statusCode, headers, body)
-        } catch (error) {
-          return this.formatErrorResult(error)
+        if (!result) {
+          return this.formatSuccessResult(204)
         }
-      })
+
+        const { statusCode, body, headers } = result
+        return this.formatSuccessResult(statusCode, headers, body)
+      } catch (error) {
+        return this.formatErrorResult(error)
+      }
+    }
   }
 
   private extractActionInfo(
