@@ -207,12 +207,16 @@ abstract class DynamoDataStorage<TEntity>
   }
 
   public async save(entity: TEntity): Promise<TEntity> {
-    await this.documentClient
+    const result = await this.documentClient
       .put({
         TableName: this.tableName,
         Item: entity,
       })
       .promise()
+
+    if (result.$response.error) {
+      throw result.$response.error
+    }
 
     return entity
   }
