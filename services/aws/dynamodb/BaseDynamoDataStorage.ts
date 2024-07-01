@@ -19,7 +19,9 @@ abstract class BaseDynamoDataStorage<TEntity> {
   protected readonly documentClient: DynamoDBDocumentClient
 
   protected constructor(protected readonly tableName: string) {
-    this.documentClient = DynamoDBDocumentClient.from(new DynamoDBClient())
+    this.documentClient = DynamoDBDocumentClient.from(new DynamoDBClient(), {
+      marshallOptions: { removeUndefinedValues: true },
+    })
   }
 
   protected async executeQuery<TResultEntity = TEntity>(
