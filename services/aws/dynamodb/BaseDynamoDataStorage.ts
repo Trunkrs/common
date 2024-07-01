@@ -5,10 +5,12 @@ import {
   QueryCommand,
   QueryCommandInput,
   QueryCommandOutput,
+  ScanCommand,
   ScanCommandInput,
   ScanCommandOutput,
 } from '@aws-sdk/lib-dynamodb'
-import { DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb'
+
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import PaginatedFindResult from './interfaces/PaginatedFindResult'
 
 abstract class BaseDynamoDataStorage<TEntity> {
