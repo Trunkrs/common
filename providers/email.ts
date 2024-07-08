@@ -64,7 +64,7 @@ export const configureEmailClients = (
     SESClientSymbol,
     Lifecycle.Singleton,
     () =>
-      new SES.SESClient({
+      new SES.SES({
         region: request.sesRegion,
       }),
   )
