@@ -60,7 +60,7 @@ export const configureEmailClients = (
       ),
   )
 
-  serviceProvider.register(
+  awsProvider.register(
     SESClientSymbol,
     Lifecycle.Singleton,
     () =>
