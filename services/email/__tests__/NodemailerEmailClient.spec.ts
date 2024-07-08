@@ -7,7 +7,11 @@ import NodemailerEmailClient, {
 } from '../NodemailerEmailClient'
 import Environment from '../../../models/enum/Environment'
 import { RecipientValidationConfig } from '../EmailClient/models'
-import EmailValidationError from '../../../models/errors/email/EmailValidationError'
+import EmailHasNoBodyError from '../../../models/errors/email/EmailHasNoBodyEmailError'
+import {
+  EmailDomainNotAllowedOnEnvironmentError,
+  EmailHasNoSubjectError,
+} from '../../../models/errors/email'
 
 const createMockMailer = () => ({
   sendMail: jest.fn(),
@@ -79,14 +83,14 @@ describe('NodemailerEmailClient', () => {
 
       mockSESTemplateClient.createEmailFromTemplate.mockResolvedValueOnce({})
       await expect(async () => sut.sendTemplatedEmail(params)).rejects.toThrow(
-        EmailValidationError,
+        EmailHasNoBodyError,
       )
 
       mockSESTemplateClient.createEmailFromTemplate.mockResolvedValueOnce({
         text: 'A body',
       })
       await expect(async () => sut.sendTemplatedEmail(params)).rejects.toThrow(
-        EmailValidationError,
+        EmailHasNoSubjectError,
       )
     })
 
@@ -103,7 +107,7 @@ describe('NodemailerEmailClient', () => {
       }
 
       await expect(async () => sut.sendTemplatedEmail(params)).rejects.toThrow(
-        EmailValidationError,
+        EmailDomainNotAllowedOnEnvironmentError,
       )
     })
   })
