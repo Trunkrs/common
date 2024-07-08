@@ -1,2 +1,5 @@
-export { default as NoEmailBodyError } from './EmailValidationError'
 export { default as TemplateNotFoundError } from './TemplateNotFoundError'
+export { default as EmailAddressVerificationFailedError } from './EmailAddressVerificationFailedError'
+export { default as EmailDomainNotAllowedOnEnvironmentError } from './EmailDomainNotAllowedOnEnvironmentError'
+export { default as EmailHasNoSubjectError } from './EmailHasNoSubjectError'
+export { default as EmailHasNoBodyEmailError } from './EmailHasNoBodyEmailError'

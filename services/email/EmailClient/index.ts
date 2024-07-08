@@ -1,5 +1,5 @@
+import { EmailDomainNotAllowedOnEnvironmentError } from '../../../models/errors/email'
 import { EmailClientConfig, SendTemplatedEmailRequest } from './models'
-import EmailValidationError from '../../../models/errors/email/EmailValidationError'
 
 abstract class EmailClient<
   TConfig extends EmailClientConfig = EmailClientConfig,
@@ -41,23 +41,19 @@ abstract class EmailClient<
     }
     const { allowedDomains } = validateRecipientDomains
 
-    const hasInvalidRecipientDomains =
-      allowedDomains && this.areRecipientDomainsInvalid(to, allowedDomains)
-
-    if (hasInvalidRecipientDomains) {
-      throw new EmailValidationError()
-    }
-  }
-
-  private areRecipientDomainsInvalid(
-    addresses: string[],
-    allowedDomains: string[],
-  ): boolean {
-    return addresses.some((address) => {
+    const invalidDomains = to.filter((address) => {
       const [, domain] = address.split('@')
 
-      return !allowedDomains.includes(domain)
+      return !allowedDomains.some((allowedDomain) => allowedDomain === domain)
     })
+
+    if (invalidDomains) {
+      throw new EmailDomainNotAllowedOnEnvironmentError(
+        stage,
+        allowedDomains,
+        to,
+      )
+    }
   }
 }
 

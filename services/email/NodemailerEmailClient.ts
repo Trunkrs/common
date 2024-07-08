@@ -8,7 +8,10 @@ import {
 } from './EmailClient/models'
 import { Attachment, EmailContent } from '../../models/email'
 import SESTemplateClient from './SESTemplateClient'
-import EmailValidationError from '../../models/errors/email/EmailValidationError'
+import {
+  EmailHasNoBodyEmailError,
+  EmailHasNoSubjectError,
+} from '../../models/errors/email'
 
 export interface NodemailerConfig extends EmailClientConfig {
   mailer: Mail
@@ -90,8 +93,12 @@ class NodemailerEmailClient extends EmailClient<NodemailerConfig> {
     const noEmailBodyErrorCondition = !hasEmailBody && requireBody
     const noSubjectErrorCondition = !subject && requireSubject
 
-    if (noEmailBodyErrorCondition || noSubjectErrorCondition) {
-      throw new EmailValidationError()
+    if (noEmailBodyErrorCondition) {
+      throw new EmailHasNoBodyEmailError()
+    }
+
+    if (noSubjectErrorCondition) {
+      throw new EmailHasNoSubjectError()
     }
   }
 }
