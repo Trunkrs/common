@@ -44,7 +44,7 @@ export const configureEmailClients = (
 
   serviceProvider.register(NodemailerClient, Lifecycle.Singleton, () =>
     createTransport({
-      SES: { ses: serviceProvider.provide(SESClientSymbol), aws: SES },
+      SES: { ses: awsProvider.provide(SESClientSymbol), aws: SES },
     }),
   )
 
@@ -60,7 +60,7 @@ export const configureEmailClients = (
       ),
   )
 
-  awsProvider.register(
+  serviceProvider.register(
     SESClientSymbol,
     Lifecycle.Singleton,
     () =>
@@ -74,7 +74,7 @@ export const configureEmailClients = (
     Lifecycle.Singleton,
     () =>
       new SESTemplateClient(
-        awsProvider.provide(SESClientSymbol),
+        new SES.SESClient({ region: 'eu-west-1' }),
         serviceProvider.provide(TemplateFileCache),
       ),
   )
