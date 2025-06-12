@@ -13,7 +13,7 @@ class LambdaClient<TResponse = unknown, TInvokeArgs = unknown> {
     protected readonly lambdaInstance: AWSLambdaClient,
   ) {}
 
-  public async invokeLambda(args?: TInvokeArgs): Promise<TResponse | void> {
+  public async invokeLambda(args?: TInvokeArgs): Promise<TResponse | null> {
     const serializedInput = args
       ? this.serializer.serialize(args, 'string')
       : undefined
@@ -33,7 +33,7 @@ class LambdaClient<TResponse = unknown, TInvokeArgs = unknown> {
     }
 
     if (!result.Payload) {
-      return
+      return null
     }
 
     const deserializedResult = this.serializer.deserialize<TResponse>(

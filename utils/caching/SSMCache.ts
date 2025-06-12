@@ -1,29 +1,39 @@
+import addSeconds from 'date-fns/addSeconds'
 import {
-  SSMClient,
-  PutParameterCommand,
-  GetParameterCommand,
-  GetParametersByPathCommand,
   DeleteParameterCommand,
   DeleteParametersCommand,
+  GetParameterCommand,
+  GetParametersByPathCommand,
+  PutParameterCommand,
+  SSMClient,
 } from '@aws-sdk/client-ssm'
-import addSeconds from 'date-fns/addSeconds'
+import Cache, { CacheItem } from './Cache'
 
-import Logger from '../logging/Logger'
-
-import { CacheItem } from './Cache'
-import GlobalAtomicCache from './GlobalAtomicCache'
-
-class SecretCache extends GlobalAtomicCache {
-  private readonly ssmClient = new SSMClient()
-
+export default class SSMCache extends Cache {
   public constructor(
-    storeName: string,
-    mountPath: string,
-    protected readonly stalenessTimeout: number,
-    logger: Logger,
-    private cacheDomain = 'cache',
+    stalenessTimeout: number,
+    private readonly ssmClient: SSMClient,
+    private readonly storeName: string,
+    private readonly cacheDomain = 'cache',
   ) {
-    super(stalenessTimeout, storeName, mountPath, logger)
+    super(stalenessTimeout)
+  }
+
+  private getFullParameterName(key: string): string {
+    return `/${this.cacheDomain}/${this.storeName}/${key}`
+  }
+
+  protected createItem<TValue>(rawValue: TValue): CacheItem {
+    return {
+      expiration: addSeconds(new Date(), this.stalenessTimeout),
+      value: rawValue,
+    }
+  }
+
+  public async hasKey(key: string): Promise<boolean> {
+    const secret = await this.get(key)
+
+    return !!secret
   }
 
   public async add<TValue>(key: string, value: TValue): Promise<void> {
@@ -38,8 +48,6 @@ class SecretCache extends GlobalAtomicCache {
       },
     ]
 
-    this.logger.info('[SecretCache] - Saving SSM Parameter', key, value)
-
     const command = new PutParameterCommand({
       Name: this.getFullParameterName(key),
       Type: 'SecureString',
@@ -49,16 +57,10 @@ class SecretCache extends GlobalAtomicCache {
     })
 
     await this.ssmClient.send(command)
-
-    this.logger.info('SSM parameter saved!')
   }
 
   public async get<TValue>(key: string): Promise<TValue | null> {
     try {
-      this.logger.info('[SecretCache] - Fetching parameter', {
-        name: this.getFullParameterName(key),
-      })
-
       const command = new GetParameterCommand({
         Name: this.getFullParameterName(key),
         WithDecryption: true,
@@ -66,9 +68,6 @@ class SecretCache extends GlobalAtomicCache {
 
       const parameter = await this.ssmClient.send(command)
 
-      this.logger.info('[SecretCache] - Fetched parameter', {
-        parameter: parameter?.Parameter,
-      })
       if (!parameter.Parameter) {
         return null
       }
@@ -77,9 +76,32 @@ class SecretCache extends GlobalAtomicCache {
 
       return secretValue ? JSON.parse(secretValue) : null
     } catch (e) {
-      this.logger.error('[SecretCache] - Error', { error: e })
       return null
     }
+  }
+
+  public async getOrAdd<TValue>(
+    key: string,
+    factory: () => Promise<TValue>,
+  ): Promise<TValue> {
+    const potentialHit = await this.get(key)
+
+    if (potentialHit) {
+      return potentialHit as TValue
+    }
+
+    const newValue = await factory()
+    await this.add(key, newValue)
+
+    return newValue
+  }
+
+  public async remove(key: string): Promise<void> {
+    const command = new DeleteParameterCommand({
+      Name: this.getFullParameterName(key),
+    })
+
+    await this.ssmClient.send(command)
   }
 
   public async clear(): Promise<void> {
@@ -105,31 +127,4 @@ class SecretCache extends GlobalAtomicCache {
 
     await this.ssmClient.send(deleteParametersCommand)
   }
-
-  public async hasKey(key: string): Promise<boolean> {
-    const secret = await this.get(key)
-
-    return !!secret
-  }
-
-  public async remove(key: string): Promise<void> {
-    const command = new DeleteParameterCommand({
-      Name: this.getFullParameterName(key),
-    })
-
-    await this.ssmClient.send(command)
-  }
-
-  private getFullParameterName(key: string): string {
-    return `/${this.cacheDomain}/${this.storeName}/${key}`
-  }
-
-  protected createItem<TValue>(rawValue: TValue): CacheItem {
-    return {
-      expiration: addSeconds(new Date(), this.stalenessTimeout),
-      value: rawValue,
-    }
-  }
 }
-
-export default SecretCache
