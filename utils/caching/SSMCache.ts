@@ -106,7 +106,7 @@ export default class SSMCache extends Cache {
 
   public async clear(): Promise<void> {
     const getParametersByPathCommand = new GetParametersByPathCommand({
-      Path: `${this.storeName}`,
+      Path: `/${this.cacheDomain}/${this.storeName}/`,
     })
 
     const { Parameters: parameters } = await this.ssmClient.send(
