@@ -1,4 +1,4 @@
-import addSeconds from 'date-fns/addSeconds'
+import addMilliseconds from 'date-fns/addMilliseconds'
 import {
   DeleteParameterCommand,
   DeleteParametersCommand,
@@ -25,7 +25,7 @@ export default class SSMCache extends Cache {
 
   protected createItem<TValue>(rawValue: TValue): CacheItem {
     return {
-      expiration: addSeconds(new Date(), this.stalenessTimeout),
+      expiration: addMilliseconds(new Date(), this.stalenessTimeout),
       value: rawValue,
     }
   }
@@ -106,7 +106,7 @@ export default class SSMCache extends Cache {
 
   public async clear(): Promise<void> {
     const getParametersByPathCommand = new GetParametersByPathCommand({
-      Path: `/portal-cache/${this.storeName}`,
+      Path: `${this.storeName}`,
     })
 
     const { Parameters: parameters } = await this.ssmClient.send(
