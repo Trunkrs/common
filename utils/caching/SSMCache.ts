@@ -9,6 +9,10 @@ import {
 } from '@aws-sdk/client-ssm'
 import Cache, { CacheItem } from './Cache'
 
+interface SSMCacheItem extends CacheItem {
+  unixExpiration: number
+}
+
 export default class SSMCache extends Cache {
   public constructor(
     stalenessTimeout: number,
@@ -23,10 +27,13 @@ export default class SSMCache extends Cache {
     return `/${this.cacheDomain}/${this.storeName}/${key}`
   }
 
-  protected createItem<TValue>(rawValue: TValue): CacheItem {
+  protected createItem<TValue>(rawValue: TValue): SSMCacheItem {
+    const expiration = addMilliseconds(new Date(), this.stalenessTimeout)
+
     return {
-      expiration: addMilliseconds(new Date(), this.stalenessTimeout),
+      expiration,
       value: rawValue,
+      unixExpiration: expiration.getTime(),
     }
   }
 
@@ -52,7 +59,7 @@ export default class SSMCache extends Cache {
       Name: this.getFullParameterName(key),
       Type: 'SecureString',
       Policies: JSON.stringify(expirationPolicy),
-      Value: JSON.stringify(secret.value),
+      Value: JSON.stringify(secret),
       Tier: 'Advanced',
     })
 
@@ -74,7 +81,19 @@ export default class SSMCache extends Cache {
 
       const { Value: secretValue } = parameter.Parameter
 
-      return secretValue ? JSON.parse(secretValue) : null
+      const value: SSMCacheItem | null = secretValue
+        ? JSON.parse(secretValue)
+        : null
+
+      if (value) {
+        const isItemExpired = new Date().getTime() >= value?.unixExpiration
+        if (isItemExpired) {
+          return null
+        }
+        return value.value as TValue
+      }
+
+      return null
     } catch (e) {
       return null
     }
