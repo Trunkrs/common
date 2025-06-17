@@ -61,6 +61,7 @@ export default class SSMCache extends Cache {
       Policies: JSON.stringify(expirationPolicy),
       Value: JSON.stringify(secret),
       Tier: 'Advanced',
+      Overwrite: true,
     })
 
     await this.ssmClient.send(command)
