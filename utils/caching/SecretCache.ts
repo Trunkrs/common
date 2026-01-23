@@ -46,6 +46,7 @@ class SecretCache extends GlobalAtomicCache {
       Policies: JSON.stringify(expirationPolicy),
       Value: JSON.stringify(secret.value),
       Tier: 'Advanced',
+      Overwrite: true,
     })
 
     await this.ssmClient.send(command)
