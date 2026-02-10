@@ -87,33 +87,52 @@ abstract class DynamoDataStorage<TEntity>
     keys: PrimaryKey<TEntity>[],
     batchSize = 100,
   ): Promise<TEntity[]> {
-    const batches = []
-    while (keys.length) {
-      batches.push(keys.splice(0, batchSize).filter((key) => key))
+    const processedResults: TEntity[] = []
+
+    let retryCounter = 0
+    let remainingKeys = [...keys]
+    while (remainingKeys.length && retryCounter < 3) {
+      const batches = []
+      while (remainingKeys.length) {
+        batches.push(remainingKeys.splice(0, batchSize).filter((key) => key))
+      }
+
+      const unprocessedKeys: PrimaryKey<TEntity>[] = []
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.all(
+        batches.map(async (batch) => {
+          const command = new BatchGetCommand({
+            RequestItems: {
+              [this.tableName]: { Keys: batch },
+            },
+          })
+
+          const results = await this.documentClient.send(command)
+
+          if (
+            results.UnprocessedKeys &&
+            results.UnprocessedKeys[this.tableName]?.Keys
+          ) {
+            const localBatchUnprocessedKeys =
+              results.UnprocessedKeys[this.tableName].Keys
+            unprocessedKeys.push(
+              ...(localBatchUnprocessedKeys as PrimaryKey<TEntity>[]),
+            )
+          }
+
+          if (results.Responses && results.Responses[this.tableName]) {
+            processedResults.push(
+              ...(results.Responses[this.tableName] as TEntity[]),
+            )
+          }
+        }),
+      )
+
+      retryCounter += 1
+      remainingKeys = unprocessedKeys
     }
 
-    const batchResults = await Promise.all(
-      batches.map(async (batch) => {
-        const command = new BatchGetCommand({
-          RequestItems: {
-            [this.tableName]: { Keys: batch },
-          },
-        })
-
-        const results = await this.documentClient.send(command)
-
-        return (
-          ((results.Responses &&
-            results.Responses[this.tableName]) as TEntity[]) || []
-        )
-      }),
-    )
-
-    return batchResults.reduce((results, batch) => {
-      results.push(...batch)
-
-      return results
-    }, [])
+    return processedResults
   }
 
   public query<TResultEntity = TEntity>(
