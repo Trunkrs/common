@@ -3,6 +3,8 @@
 import Cache from './Cache'
 
 export default class MultiLayerCache extends Cache {
+  private readonly inFlight = new Map<string, Promise<unknown>>()
+
   public constructor(
     stalenessTimeout: number,
     private readonly layers: Cache[],
@@ -42,15 +44,42 @@ export default class MultiLayerCache extends Cache {
     key: string,
     factory: () => Promise<TValue>,
   ): Promise<TValue> {
-    const potentialHit = await this.get(key)
+    const pending = this.inFlight.get(key)
 
-    if (potentialHit) {
-      return potentialHit as TValue
+    if (pending) {
+      return pending as Promise<TValue>
     }
 
-    const newValue = await factory()
-    await this.add(key, newValue)
-    return newValue
+    const workPromise = (async (): Promise<TValue> => {
+      const potentialHit = await this.get<TValue>(key)
+
+      if (potentialHit) {
+        return potentialHit
+      }
+
+      const newValue = await factory()
+
+      try {
+        await this.add(key, newValue)
+      } catch (error) {
+        // A failed cache write must never fail the caller, who already holds the value.
+        // eslint-disable-next-line no-console
+        console.warn(
+          `MultiLayerCache: failed to store value for key "${key}"`,
+          error,
+        )
+      }
+
+      return newValue
+    })()
+
+    this.inFlight.set(key, workPromise)
+
+    try {
+      return await workPromise
+    } finally {
+      this.inFlight.delete(key)
+    }
   }
 
   async remove(key: string): Promise<void> {
